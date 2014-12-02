@@ -1,0 +1,336 @@
+\documentclass[a4paper,fleqn]{article}
+%
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{cite}
+\usepackage{calc}
+\usepackage{array}
+\usepackage{texdraw}
+\usepackage{fancyvrb}
+
+\paperwidth 210mm
+\paperheight 297mm
+\textwidth 160mm
+\textheight 240mm
+\hoffset 0mm
+\voffset 0mm
+\evensidemargin 0mm
+\oddsidemargin 0mm
+\topmargin 0mm
+\headheight 0mm
+\headsep 0mm
+\parindent 0em
+\parskip 0.5em
+\footnotesep 1em
+\setlength{\skip\footins}{6mm}
+
+\setcounter{tocdepth}{1}
+
+%========================================================================
+%  Shorthands
+%========================================================================
+\newcommand{\Version}{1.6.1}
+
+\newcommand{\Digits}{\tx{Digits}}
+\newcommand{\Digitsa}{\tx{digits()}}
+\newcommand{\Digitsb}{\tx{Digits()}}
+\newcommand{\Factor}{\tx{Factor}}
+\newcommand{\Factorb}{\tx{Factor()}}
+\newcommand{\Input}{\tx{Input}}
+\newcommand{\Inputa}{\tx{input}}
+\newcommand{\Inputb}{\tx{Input()}}
+\newcommand{\Mouse}{\textsl{Mouse}}
+\newcommand{\Number}{\tx{Number}}
+\newcommand{\Numbera}{\tx{number()}}
+\newcommand{\Numberb}{\tx{Number()}}
+\newcommand{\Object}{\tx{Object}}
+\newcommand{\Phrase}{\tx{Phrase}}
+\newcommand{\Plus}{\tx{Plus}}
+\newcommand{\Plusa}{\tx{plus()}}
+\newcommand{\Plusb}{\tx{Plus()}}
+\newcommand{\Print}{\tx{Print}}
+\newcommand{\Printa}{\tx{print()}}
+\newcommand{\Printb}{\tx{Print()}}
+\newcommand{\Product}{\tx{Product}}
+\newcommand{\Producta}{\tx{product()}}
+\newcommand{\Productb}{\tx{Product()}}
+\newcommand{\Sign}{\tx{Sign}}
+\newcommand{\Signb}{\tx{Sign()}}
+\newcommand{\Space}{\tx{Space}}
+\newcommand{\Spacea}{\tx{space()}}
+\newcommand{\Spaceb}{\tx{Space()}}
+\newcommand{\Store}{\tx{Store}}
+\newcommand{\Storea}{\tx{store()}}
+\newcommand{\Storeb}{\tx{Store()}}
+\newcommand{\String}{\tx{String}}
+\newcommand{\Sum}{\tx{Sum}}
+\newcommand{\Suma}{\tx{sum()}}
+\newcommand{\Sumb}{\tx{Sum()}}
+
+\newcommand{\follow}{\operatorname{follow}}
+\newcommand{\sL}{\mathcal{L}}             % Script L
+\newcommand{\Pref}{\operatorname{Pref}}
+\renewcommand{\emptyset}{\varnothing}     % Empty set
+
+%========================================================================
+%  Spacing in tables
+%========================================================================
+\newcommand{\dnsp}{\rule[-1.4ex]{0ex}{1ex}}    % Space below text
+\newcommand{\upsp}{\rule{0ex}{2.9ex}}          % Space above text
+\newcommand{\prop}{\rule[-0.4ex]{0ex}{2.5ex}}  % Space in boxes
+
+%========================================================================
+%  TT font
+%========================================================================
+%\newcommand{\tx}[1]{\small\texttt{#1}\normalsize}
+\newcommand{\tx}[1]{\texttt{#1}}
+ 
+%========================================================================
+%  Unordered list
+%========================================================================
+\newcommand{\ul}
+{\begin{list}
+{--}
+ {\setlength{\topsep}{0.5ex}
+  \setlength{\itemsep}{0ex}
+  \setlength{\parsep}{0ex}
+  \setlength{\itemindent}{0em}
+  \setlength{\labelwidth}{1em}
+  \setlength{\labelsep}{0.5em}
+  \setlength{\leftmargin}{1.5em}
+ }
+}
+\newcommand{\eul}{\end{list}}
+ 
+%========================================================================
+%  entry
+%========================================================================
+\newcommand{\entrylabel}[1]{{#1}\dnsp\hfill}
+\newenvironment{entry}
+  {\begin{list}{}%
+     {\renewcommand{\makelabel}{\entrylabel}%
+       \setlength{\labelwidth}{10pt}%
+       \setlength{\leftmargin}{\labelwidth+\labelsep}%
+       \setlength{\itemsep}{12pt}%
+     }%
+  }%
+  {\end{list}}
+
+%========================================================================
+%  Texdraw macros
+%========================================================================
+\newcommand{\phrase}[6] % #1=class #2=position #3=value #4=top text #5=bottom text #6=ref
+  { 
+    \linewd 0.1
+    \textref h:C v:C
+    \savecurrpos(*#6cx *#6cy)                           % Save lower left corner
+    \rmove (12 15) \savecurrpos (*#6tx *#6ty)           % Save mid-points of box sides
+    \rmove (0 -15) \savecurrpos (*#6bx *#6by)
+    \move(*#6cx *#6cy)
+    \rmove (0 7.5) \savecurrpos (*#6lx *#6ly)
+    \rmove (24 0)  \savecurrpos (*#6rx *#6ry)
+    \move(*#6cx *#6cy)                                  % Draw box
+    \rlvec (24 0) \rlvec (0 15) 
+    \rlvec (-24 0) \rlvec (0 -15)
+    \move(*#6cx *#6cy) \rmove (0 5) \rlvec(24 0)        % .. with line inside
+    \move(*#6cx *#6cy) \rmove (12 12)   \htext{\tx{#1}} % Class name
+    \move(*#6cx *#6cy) \rmove (12 7.5)  \htext{\tx{#2}} % Consumed text
+    \move(*#6cx *#6cy) \rmove (12 2.2)  \htext{\tx{#3}} % Semantic value
+    \move(*#6cx *#6cy) \rmove (12 18) \htext{\tx{#4}}   % Text above
+    \move(*#6cx *#6cy)
+  }
+  
+\newcommand{\lowphrase}[6] % #1=class #2=position #3=value #4=no top text #5=no bottom text #6=ref
+  { 
+    \linewd 0.1
+    \textref h:C v:C
+    \savecurrpos(*#6cx *#6cy)                           % Save lower left corner
+    \rmove (12 15) \savecurrpos (*#6tx *#6ty)           % Save mid-points of box sides
+    \rmove (0 -15) \savecurrpos (*#6bx *#6by)
+    \move(*#6cx *#6cy)
+    \rmove (0 7.5) \savecurrpos (*#6lx *#6ly)
+    \rmove (24 0)  \savecurrpos (*#6rx *#6ry)
+    \move(*#6cx *#6cy)                                  % Draw box
+    \rlvec (24 0) \rlvec (0 15) 
+    \rlvec (-24 0) \rlvec (0 -15)
+    \move(*#6cx *#6cy) \rmove (0 5) \rlvec(24 0)        % .. with line inside
+    \move(*#6cx *#6cy) \rmove (12 12)   \htext{\tx{#1}} % Class name
+    \move(*#6cx *#6cy) \rmove (12 7.5)  \htext{\tx{#2}} % Consumed text
+    \move(*#6cx *#6cy) \rmove (12 2.2)  \htext{\tx{#3}} % Semantic value
+    \move(*#6cx *#6cy)
+  }
+  
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+%  Title page
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+\begin{document}
+
+\pagestyle{empty}
+\vspace*{\stretch{1}}
+\begin{center}
+\rule{\linewidth-20mm}{.5mm}
+
+\bigskip
+\Large \textbf{\textit{MOUSE}: FROM PARSING EXPRESSIONS\\TO A PRACTICAL PARSER}
+
+\bigskip
+\Large Version \Version
+
+\bigskip
+\Large Roman R. Redziejowski
+\rule{\linewidth-20mm}{.5mm}
+\vspace*{\stretch{1}}
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+%  Abstract
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\normalsize
+\parbox{0.875\linewidth}{
+\noindent
+Parsing Expression Grammar (PEG) is a new way to specify
+recursive-descent parsers with limited backtracking.
+The use of backtracking lifts the $LL(1)$ restriction usually imposed
+by top-down parsers.
+In addition, PEG can define parsers with integrated lexing.
+
+\medskip
+\noindent
+\Mouse\ is a tool to transcribe PEG into an executable parser written in Java.
+Unlike some existing PEG generators (e.g., \textsl{Rats!}), \Mouse\
+does not produce a storage-hungry "packrat parser",
+but a collection of transparent recursive procedures.
+
+\medskip
+\noindent
+An integral feature of \Mouse\ is the mechanism for specifying
+semantics (also in Java).
+This makes \Mouse\ a convenient tool if one needs an ad-hoc language processor.
+Being written in Java, the processor is operating-system independent.
+
+\medskip
+\noindent
+This is a user's manual in the form of a tutorial
+that introduces the reader to \Mouse\ through 
+a hands-on experience.}
+\end{center}
+
+\vspace*{\stretch{3}}
+\begin{center}
+May 13, 2014
+
+\end{center}
+\newpage
+
+
+\vspace*{\stretch{1}}
+\noindent
+Copyright \copyright\ 2009, 2010, 2011, 2012, 2013, 2014 by Roman R. Redziejowski (\tx{www.romanredz.se}).
+
+\noindent
+The author gives unlimited permission to copy, translate and/or distribute
+this document, with or without modifications, 
+as long as this notice is preserved,
+and information is provided about any changes.
+
+\noindent
+The document is available from \tx{http://mousepeg.sourceforge.net}.
+\newpage
+\tableofcontents
+
+\newpage
+\vspace*{\stretch{1}}
+\subsection*{Changes from version of January 6, 2012:}
+\ul
+\item Appendix C: Parser generated with \tx{-M} accepts 0 as argument of \tx{setMemo}.
+\item Appendix D: New options: \tx{-t} and \tx{-C}
+      for tools \tx{TryParser} and \tx{TestParser}.
+\eul
+\subsection*{Changes from version of November 5, 2011:}
+No new or modified functionality, only new version number.
+(The new version contains a bug fix.)
+\subsection*{Changes from version of October 15, 2011:}
+\ul
+\item New helper methods \tx{rule()} and \tx{isTerm()} described in Appendix B.
+\eul
+\subsection*{Changes from version of July 21, 2011:}
+\ul
+\item New parsing expressions: \tx{\textasciicircum[}$s$\tx{]}, 
+      $e_1\tx{*+}\,e_2$, and $e_1\tx{++}\,e_2$  
+      described in Section~\ref{PEG}.
+\item The use of \tx{++} illustrated in Section~\ref{errRec} on Example 10.
+\item New helper method \tx{where()} described in Appendix B.
+\item The use of \tx{where()} illustrated in Section~\ref{calc}
+      on Example 7.
+\item Updated grammar in Appendix A.      
+\eul
+
+\newpage
+\pagestyle{plain}
+\setcounter{page}{1}
+
+\input{Parsers}      % Recursive-descent parsers
+
+\input{PEG}          % Parsing Expression Grammar
+
+\input{GetStarted}   % Getting started
+
+\input{FirstSteps}   % The first steps
+
+\input{Semantics}    % Adding semantics
+
+\input{RHS}          % Understanding the "right-hand side"
+
+\input{Realistic}    % Getting more realistic
+
+\input{Floating}     % Let's go floating
+
+\input{Backtracking} % What about backtracking?
+
+\input{NotPackRat}   % A mouse, not a pack rat
+
+\input{FullArith}    % Full arithmetic
+
+\input{Tree}         % Want a tree?
+
+\input{Calculator}   % Calculator with memory
+
+\input{Errors}       % Get error handling right
+
+\input{Backtrack2}   % Backtracking again
+
+\input{FileInput}    % Input from file
+
+\input{Recovery}     % Error recovery
+
+\input{Features}     % Miscellaneous features
+
+\input{Deploying}    % Deploying
+
+\appendix
+
+\input{AppendixA}    % The grammar of Mouse PEG
+
+\input{AppendixB}    % Helper methods
+
+\input{AppendixC}    % Your parser class
+
+\input{AppendixD}    % Mouse tools
+
+\newpage
+    
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+    
+%  Bibliography
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\bibliographystyle{acm}
+\bibliography{Bib}
+\end{document}

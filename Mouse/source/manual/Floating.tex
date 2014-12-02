@@ -1,0 +1,113 @@
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\section{Let's go floating}
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+To illustrate some more features of \Mouse,
+we shall add floating-point numbers to your primitive calculator.
+The calculations will now be done on numbers in \tx{double} form.
+The only thing needed in the grammar is the possibility to specify such numbers.
+We decide for a format with one or more digits after the decimal point,
+and optional digits before: \tx{Digits?~"."~Digits}.
+We are going to keep the integer format as an alternative, 
+which means defining \Number\ as
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+         Number = Digits? "." Digits Space / Digits Space ;
+\end{Verbatim}
+\normalsize
+
+The two alternatives produce two quite different configurations of the "right-hand side".
+The semantic action would have to begin by identifying them.
+But, this has already been done by the parser.
+To exploit that, you specify a separate semantic action
+for each alternative in a rule that defines choice expression.
+It means modifying your grammar as follows:
+%
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   Sum     = Space Sign Number (AddOp Number)* !_ {sum} ;
+   Number  = Digits? "." Digits Space {fraction}
+           / Digits Space {integer} ; 
+   Sign    = ("-" Space)? ;
+   AddOp   = [-+] Space ;
+   Digits  = [0-9]+ ;
+   Space   = " "* ;
+\end{Verbatim}
+\normalsize
+%
+You specify here two semantic actions, \tx{fraction()} and \tx{integer()}, 
+for the two alternatives of \Number.
+
+The first of them is invoked to handle input of the form \tx{Digits?~"."~Digits~Space}.
+According to the rule given in Section~\ref{RHS}, it can result
+in two possible configurations of the "right-hand side":
+ 
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.9]
+         Digits "." Digits Space       or       "." Digits Space
+            0    1     2     3                   0     1     2
+\end{Verbatim}
+\normalsize
+ 
+You need to convert the text that represents the floating-point number
+into a \tx{Double} object.
+You can obtain this text
+by using the helper method \tx{rhsText($i,j$)}.
+The method returns the text identified by the right-hand side
+elements $i$ through $j-1$.
+As you can easily see, \tx{rhsText(0,rhsSize()-1)} will do the
+job for each of the two configurations, so \tx{fraction()} can be coded as follows:
+ 
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   //-------------------------------------------------------------------
+   //  Number = Digits? "."  Digits Space
+   //              0    1(0)  2(1)   3(2)
+   //-------------------------------------------------------------------
+   void fraction()
+     { lhs().put(Double.valueOf(rhsText(0,rhsSize()-1))); }
+\end{Verbatim}
+\normalsize
+ 
+As computation will now be done in floating point,
+\tx{integer()} should also return a \tx{Double}:
+ 
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   //-------------------------------------------------------------------
+   //  Number = Digits Space
+   //              0     1
+   //-------------------------------------------------------------------
+   void integer()
+     { lhs().put(Double.valueOf(rhs(0).text())); }
+\end{Verbatim}
+\normalsize
+
+The semantic action for \Sum\ remains unchanged, except 
+that \tx{s} becomes \tx{double} 
+and the casts are to \tx{Double} instead of \tx{Integer}.
+
+You may copy the new grammar and semantics from \tx{example4},
+generate new parser (replacing the old), and compile both.
+A session with the new parser may look like this:
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ java mouse.TryParser -P myParser
+ > -123 + 456
+ 333.0
+  > 1.23 - 4.56
+ -3.3299999999999996
+ > 
+\end{Verbatim}
+\normalsize
+%
+(Who said floating-point arithmetic is exact?)
+
+
+
+
+

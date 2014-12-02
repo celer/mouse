@@ -1,0 +1,4 @@
+#!/bin/bash
+
+BASEDIR=`dirname $0`
+java -cp $BASEDIR/../Mouse.jar mouse.GoGenerate $@

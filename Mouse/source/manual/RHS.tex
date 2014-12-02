@@ -1,0 +1,54 @@
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\section{Understanding the "right-hand side"\label{RHS}}
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+As can be seen from the above example, you need to know the exact appearance
+of the "right-hand side" 
+in order to correctly write your semantic action.
+Your method must be prepared
+to handle a varying configuration that depends on the parsed text.
+To have this configuiration in front of you while writing the code,
+it is convenient to describe it by a comment as shown above.
+(The author has learned this style from his colleague Bertil Steinholtz,
+who used it to write very clear \tx{yacc++} code.) 
+
+The objects appearing on the "right-hand side" 
+correspond to the names and terminals appearing to the right of \tx{"="}
+in the rule.
+You can find the possible configurations of the "right-hand side"
+like this:
+
+\smallskip
+\fbox{\quad\parbox{0.935\linewidth}{\upsp 
+Take the expression to the right of \tx{"="}
+and remove from it all predicates, that is, sub-expressions 
+of the form $\text{\&}e$ and $\text{!}e$.
+Replace each \tx{"/"} by \tx{"|"}, \tx{"*+"} by \tx{"*"},
+and \tx{"++"} by \tx{"+"}.
+The result is a regular expression on an alphabet consisting
+of names and terminals treated as single letters.
+The possible configurations of the "right-hand side"
+are exactly the strings defined by this regular expression.\dnsp}\quad }
+
+\medskip
+As an example, the regular expression obtained for \Sum\ is:
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ Number ("+" Number)*
+\end{Verbatim}
+\normalsize
+
+which indeed defines these strings of symbols \Number\ and \tx{"+"}:
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ Number "+" Number ... "+" Number
+   0     1    2        n-2  n-1
+\end{Verbatim}
+\normalsize
+
+where $n = 2p + 1$ for $p = 0, 1, 2, \ldots\;$.
+

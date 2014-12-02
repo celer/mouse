@@ -1,0 +1,63 @@
+\newpage
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\section{Appendix: The grammar of \Mouse\ PEG}
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\small 
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+
+  Grammar   = Space (Rule/Skip)*+ EOT ;
+  Rule      = Name EQUAL RuleRhs DiagName? SEMI ;
+  Skip      = SEMI
+            / _++ (SEMI/EOT) ;
+  RuleRhs   = Sequence Actions (SLASH Sequence Actions)* ;
+  Choice    = Sequence (SLASH Sequence)* ;
+  Sequence  = Prefixed+ ;
+  Prefixed  = PREFIX? Suffixed ;
+  Suffixed  = Primary (UNTIL Primary / SUFFIX)? ;
+  Primary   = Name
+            / LPAREN Choice RPAREN
+            / ANY
+            / StringLit
+            / Range
+            / CharClass ;
+  Actions   = OnSucc OnFail ;
+  OnSucc    = (LWING AND? Name? RWING)? ;
+  OnFail    = (TILDA LWING Name? RWING)? ;
+  Name      = Letter (Letter / Digit)* Space ;
+  DiagName  = "<" Char++ ">" Space ;
+  StringLit = ["] Char++ ["] Space ;
+  CharClass = ("[" / "^[") Char++ "]" Space ;
+  Range     = "[" Char "-" Char "]" Space ;
+  Char      = Escape
+            / ^[\r\n\\] ;
+  Escape    = "\\u" HexDigit HexDigit HexDigit HexDigit
+            / "\\t" 
+            / "\\n"
+            / "\\r"
+            / !"\\u""\\"_ ;
+  Letter   = [a-z] / [A-Z] ;
+  Digit    = [0-9] ;
+  HexDigit = [0-9] / [a-f] / [A-F] ;
+  PREFIX   = [&!]  Space ;
+  SUFFIX   = [?*+] Space ;
+  UNTIL    = ("*+" / "++") Space ;
+  EQUAL   = "=" Space ;
+  SEMI    = ";" Space ;
+  SLASH   = "/" Space ;
+  AND     = "&" Space ;
+  LPAREN  = "(" Space ;
+  RPAREN  = ")" Space ;
+  LWING   = "{" Space ;
+  RWING   = "}" Space ;
+  TILDA   = "~" Space ;
+  ANY     = "_" Space ;
+  Space   = ([ \r\n\t] / Comment)* ;
+  Comment = "//" _*+ EOL ;
+  EOL     = [\r]? [\n] / !_  ;
+  EOT     = !_  ;
+
+\end{Verbatim}
+\normalsize

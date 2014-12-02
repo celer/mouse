@@ -1,0 +1,136 @@
+
+Changes from distribution 1.6 to 1.6.1:
+---------------------------------------
+
+Classes for Mouse tools: Generate, TestParser, TestPEG, TryParser,  
+and MakeRuntime are made public.
+
+Option --mode=755 is added to the 'tar' command used to create 
+Mouse-1.6.1.tar. This should set the correct permission bits 
+when the archive is unpacked under Unix. (The original files 
+and directories are under Windows, and have different permissions, 
+not copied by 'tar'.)
+
+
+Changes from distribution 1.5.1 to 1.6:
+---------------------------------------
+
+'TestParser' can optionally write its output in the form of
+comma-separated values (CSV) that can be imported into a spreadsheet
+application. This is controlled by option '-C'.
+
+'TryParser' and 'TestParser' may optionally write timing information.
+This is controlled by option '-t'.
+
+The output format of both 'TryParser' and 'TestParser' is slightly
+changed: file name precedes output from the parser under test.
+
+Three bugs fixed:
+- A semicolon generated after 'while' caused infinite
+  loop in an internal parsing procedure with a body
+  consisting of a '*+' expression only.
+- Omitted '-S' option to Generate ignored the package specified
+  by '-r' when defining SemanticBase.
+- 'rhsText' did not return empty string for empty range.
+
+
+Changes from distribution 1.5 to 1.5.1:
+---------------------------------------
+
+Bug fix and clean-up due to Stephen P. Owens (steve@doitnext.com).
+
+Fixed bug: after parser failure, printed a blank line if the error message
+was intercepted by semantics and error info cleared using errClear().
+
+Clean-up: removed unused variables and imports from six source files.
+
+
+Changes from distribution 1.4 to 1.5:
+-------------------------------------
+
+Identity of rule that created a Phrase made available 
+to semantic procedures via helper methods 'rule' and 'isTerm'.
+
+Bug fixed in the generated parser: 
+incorrect handling of ^[s] when s has length 1.
+
+Build file provided for compiling the source and making the jars:
+'build.xml' for Apache Ant. Invocation is described in a comment. 
+
+
+Changes from distribution 1.3.1 to 1.4:
+---------------------------------------
+
+Shorthand forms introduced for three frequently used
+constructions. They are easier to read and have
+a more efficient implementation.
+
+- e1*+ e2. A shorthand for (!e2 e1)*e2: 
+  iterate e1 until e2. 
+ 
+- e1++ e2. A shorthand for (!e2 e1)+e2: 
+  iterate e1 at least once until e2.
+  
+- ^[s]. A shorthand for ![s]_: 
+  consume character NOT appearing in string s.
+  
+Position of a Phrase in source text made available 
+to semantic procedures via helper method 'where'.
+(Feature request 3298666.)
+
+A slightly better formulation for messages
+about failing predicate !e.
+
+
+Changes from distribution 1.3a to 1.3.1:
+----------------------------------------
+
+Two bugs fixed in the generated parser:
+
+- the error message for failing predicate &e was 
+  'expected not e' instead of 'expected e'.
+  
+- an attempt to print error position at the end of file
+  resulted in an infinite loop.
+
+One bug fixed in Generate:
+
+- printed extra message 'expected : or end of input'
+  for syntax error after last semicolon.
+
+Two errors corrected in the sample grammar for Java 1.6.
+
+Sample grammar for Java 1.7 added.
+
+
+Change from distribution 1.3 to 1.3a:
+-------------------------------------
+
+Revised version of user's manual.
+
+
+Changes from distribution 1.2 to 1.3:
+-------------------------------------
+
+In the generated parser, do not check for success
+of expressions that never fail.
+
+Default character encoding is assumed for the input file
+(version 1.2 assumed ISO 8859_1). 
+Can be changed by modifying 'runtime.SourceFile'.
+
+The generated Java code uses ASCII encoding. 
+
+Helper method 'errMsg' returns a 'readable' string: 
+all characters outside the range 32-255 are represented
+by Java escapes.
+
+Improved diagnostics from TestPEG.
+
+Minor bug fixes.
+
+Sample grammars for Java and C are included in the package.
+
+
+
+

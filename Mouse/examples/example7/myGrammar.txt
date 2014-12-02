@@ -1,0 +1,21 @@
+    
+   // Example 7
+
+   Input   = Space (Store / Print) !_ ;
+   Store   = Name Space Equ Sum {store} ;
+   Print   = Sum {print} ;
+   Sum     = Sign Product (AddOp Product)* {sum} ;
+   Product = Factor (MultOp Factor)* {product} ;
+   Factor  = Digits? "." Digits Space {fraction}
+           / Digits Space {integer}
+           / Lparen Sum Rparen {unwrap} 
+           / Name Space {retrieve} ; 
+   Sign    = ("-" Space)? ;
+   AddOp   = [-+] Space ;
+   MultOp  = [*/]? Space ;
+   Lparen  = "(" Space ;
+   Rparen  = ")" Space ;
+   Equ     = "=" Space ;
+   Digits  = [0-9]+ ;
+   Name    = [a-z]+ ;
+   Space   = " "* ;

@@ -1,0 +1,245 @@
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\section{Parsing Expression Grammar\label{PEG}}
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\subsection{Parsing expressions}
+
+Parsing expressions are instructions for parsing strings,
+written in a special language.
+You can think of a parsing expression as shorthand for a procedure 
+that carries out such instruction.
+The expressions can invoke each other recursively, thus forming
+together a recursive-descent parser.
+
+In general, parsing expression is applied to a character string
+(the "input" to be parsed)
+at a position indicated by some "cursor".
+It tries to recognize a portion of the string ahead of the cursor.
+Usually, it "consumes" the recognized portion by advancing the cursor
+and indicates "success"; 
+if it fails at the recognition, it indicates "failure" 
+and does not consume anything (does not advance the cursor).
+
+The following five kinds of parsing expressions work directly
+on the input string:
+
+\ul
+\item[$\tx{"}s\tx{"}$]\upsp\newline 
+     where $s$ is a nonempty character string.
+     If the text ahead starts with the string $s$,
+     consume that string and indicate success.
+     Otherwise indicate failure.\dnsp
+
+\item[\tx{[}$s$\tx{]}]\upsp\newline 
+     where $s$ is a nonempty character string.
+     If the text ahead starts with a character appearing in $s$,
+     consume that character and indicate success.
+     Otherwise indicate failure.\dnsp
+
+\item[\tx{\textasciicircum[}$s$\tx{]}]\upsp\newline 
+     where $s$ is a nonempty character string.
+     If the text ahead starts with a character \emph{not} appearing in $s$,
+     consume that character and indicate success.
+     Otherwise indicate failure.\dnsp
+
+\item[$\tx{[}c_1\tx{-}\,c_2\tx{]}$]\upsp\newline 
+     where $c_1,c_2$ are two characters.
+     If the text ahead starts with a character from the range 
+     $c_1$~through~$c_2$, consume that character and indicate success.
+     Otherwise indicate failure.\dnsp
+
+\item[\textbf{\_\ \ }]\upsp\newline
+     where \textbf{\_\;} is the underscore character.
+     If there is a character ahead, consume it
+     and indicate success.
+     Otherwise (that is, at the end of input)
+     indicate failure.\dnsp
+\eul
+
+These expressions are analogous to terminals of a classical context-free
+grammar, and are in the following referred to as "terminals".
+The remaining kinds of parsing expressions
+invoke other expressions to do their job:
+
+\ul
+
+\item[$e\tx{?}$]\upsp\newline
+     Invoke the expression $e$ and indicate success whether it succeeded or not.\dnsp
+
+\item[$e\tx{*}$]\upsp\newline
+     Invoke the expression $e$ repeatedly as long as it succeeds.\newline
+     Indicate success even if it did not succeed a single time.\dnsp
+
+\item[$e\tx{+}$]\upsp\newline
+     Invoke the expression $e$ repeatedly as long as it succeeds.\newline
+     Indicate success if $e$ succeeded at least once.
+     Otherwise indicate failure.\dnsp
+
+\item[$\tx{\&}e$]\upsp\newline
+     This is a lookahead operation ("syntactic predicate"):
+     invoke the expression $e$ and then
+     reset the cursor as it was before the invocation of $e$
+     (do not consume input).\newline
+     Indicate success if $e$ succeeded or failure if $e$ failed.\dnsp
+
+\item[$\tx{!}e$]\upsp\newline
+     This is a lookahead operation ("syntactic predicate"):
+     invoke the expression $e$ and then
+     reset the cursor as it was before the invocation of $e$
+     (do not consume input).\newline
+     Indicate success if $e$ failed or failure if $e$ succeeded.\dnsp
+     
+\newpage
+
+\item[$e_1 \ldots e_n$]\upsp\newline
+     Invoke expressions $e_1,\ldots,e_n$, in this order,
+     as long as they succeed.
+     Indicate success if all succeeded.\newline 
+     Otherwise reset cursor as it was before the invocation of $e_1$
+     (do not consume input) and indicate failure.\dnsp
+
+\item[$e_1\,\tx{/}\ldots\,\tx{/}\,e_n$]\upsp\newline
+     Invoke expressions $e_1,\ldots,e_n$, in this order,
+     until one of them succeeds. 
+     Indicate success if one of expressions succeeded.
+     Otherwise indicate failure.\dnsp
+
+\eul
+
+The following two expressions are shorthand forms of frequently used constructions.
+In addition to being easier to read, they have a more efficient implementaton.
+
+\ul
+
+\item[$e_1\tx{*+}\,e_2$]\upsp\newline
+     A shorthand for \tx{(!}$e_2\,e_1$\tx{)*}\,$e_2$:
+     iterate $e_1$ until $e_2$.
+     More precisely: invoke $e_2$; if it fails, invoke $e_1$ and try $e_2$ again.
+     Repeat this until $e_2$ succeeds.
+     If any of the invocations of $e_1$ fails,
+     reset cursor as it was at the start
+     (do not consume input) and indicate failure.\dnsp
+
+\item[$e_1\tx{++}\,e_2$]\upsp\newline
+     A shorthand for \tx{(!}$e_2\,e_1$\tx{)+}\,$e_2$, 
+     or \tx{(!}$e_2\,e_1$\tx{)(!}$e_2\,e_1${\tx)*}\,$e_2$:
+     iterate $e_1$ at least once until $e_2$.
+     Invoke $e_2$. If it succeeds, reset the cursor (do not consume input) and indicate failure.
+     Otherwise invoke $e_1$ and try $e_2$ again.
+     Repeat this until $e_2$ succeeds.
+     If any of the invocations of $e_1$ fails,
+     reset cursor as it was at the start
+     (do not consume input) and indicate failure.\dnsp
+
+\eul
+
+\medskip
+The following table summarizes all forms of parsing expressions.
+
+% ---------------------------------------------------------------------
+\begin{center}
+\begin{tabular}{|c|l|c|} \hline
+expression & name & precedence\upsp\dnsp \\ \hline
+$\tx{"}s\tx{"}$  & String Literal \upsp & 5 \\
+$\tx{[}s\tx{]}$  & Character Class & 5 \\
+$\tx{\textasciicircum[}s\tx{]}$  & Not Character Class & 5 \\
+$\tx{[}c_1\tx{-}´\,c_2\tx{]}$ & Character Range & 5 \\
+\textbf{\_} & Any Character & 5 \\
+$e\tx{?}$  & Optional & 4 \\
+$e\tx{*}$  & Iterate & 4 \\
+$e\tx{+}$  & One or More & 4 \\
+$e_1\tx{*+}e_2$  & Iterate Until & 4 \\
+$e_1\tx{++}e_2$  & One or More Until & 4 \\
+$\tx{\&}e$ & And-Predicate & 3 \\
+$\tx{!}e$  & Not-Predicate & 3 \\
+$e_1 \ldots e_n$  & Sequence & 2 \\
+$e_1\,\tx{/}\ldots\,\tx{/}\,e_n$  & Choice\dnsp & 1 \\ \hline
+\end{tabular}
+\end{center}
+% ---------------------------------------------------------------------
+
+
+The expressions $e, e_1, \ldots, e_n$ above can be specified either explicitly
+or by name (the way of naming expressions will be explained in a short while).
+An expression specified explicitly in another expression
+with the same or higher precedence
+must be enclosed in parentheses.
+
+Backtracking takes place in the Sequence expression.
+If $e_1,\ldots,e_i$ in $e_1\ldots e_i\ldots e_n$ succeed and consume some input,
+and then $e_{i\,+1}$ fails, the cursor is moved back to where it was before trying $e_1$;
+the whole expression fails.
+If this expression was invoked from a Choice expression (and was not the last there),
+Choice has an opportunity to try another alternative on the same input.
+
+However, the opportunities to try another alternative are limited:
+once $e_i$ in the Choice expression \tx{$e_1/\ldots/e_i/\ldots /e_n$} succeeded, 
+none of the alternatives $e_{i\,+1},\ldots e_n$ will ever be tried on the same input,
+even if the parse fails later on.
+
+\subsection{The grammar}
+
+Parsing Expression Grammar is a list of one or more "rules" of the form:
+%
+\begin{equation*}
+\textit{name}\quad \tx{=}\quad \textit{expr} \;\;\tx{;}
+\end{equation*}
+%
+where \textit{expr} is a parsing expression,
+and \textit{name} is a name given to it.
+The \textit{name} is a string of one or more letters (\tx{a-z}, \tx{A-Z}) and/or digits,
+starting with a letter. 
+White space is allowed everywhere except inside names.
+Comments starting with a double slash and extending to the end of a line are also allowed.
+
+The order of the rules does not matter, except that the expression specified first
+is the "top expression", invoked at the start of the parser.
+
+\medskip
+A specific grammar may look like this:
+
+\smallskip
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   Sum    = Number ("+" Number)* !_ ;
+   Number = [0-9]+ ;
+\end{Verbatim}
+\normalsize
+%
+It consists of two named expressions: \tx{Sum} and \tx{Number}.
+They define a parser consisting of
+two procedures named \tx{Sum} and \tx{Number}.
+The parser starts by invoking \tx{Sum}.
+The \tx{Sum} invokes \tx{Number}, and if this succeeds,
+repeatedly invokes \tx{("+" Number)} as long as it succeeds.
+Finally, \tx{Sum}
+invokes a sub-procedure for the predicate "\verb#!_#",
+which succeeds only if it does not see any character ahead --
+that is, only at the end of input.
+The \tx{Number} reads digits in the range from 
+0 through 9 as long as it succeeds,
+and is expected to find at least one such digit.
+
+One can easily see that the parser
+accepts strings like "\tx{2+2}",  "\tx{17+4711}", or "\tx{2}";
+in general, one or more integers separated by "\tx{+}".
+You could guess this by reading the above as EBNF,
+which often leads you right.
+However, you should keep in mind that,
+in spite of its outward similarity,
+PEG \emph{is not} EBNF.
+
+If you are not familiar with PEG programming, you may get some insights
+into its problems and pitfalls from the author's papers 
+\cite{Redz:2007:FI,Redz:2008:FI,Redz:2009:FI}.
+
+It is quite obvious that the grammar you define must not be left-recursive,
+and the expression $e$ in $e\tx{*}$ and $e\tx{+}$ must never succeed
+in consuming an empty string;
+otherwise, the parser could run into an infinite descent or an infinite loop.
+In \cite{Ford:2004} Ford defined a formal property \textit{WF} (Well-Formed)
+that guarantees absence of these problems.
+\Mouse\ computes this property and points out expressions that are not well-formed.
+

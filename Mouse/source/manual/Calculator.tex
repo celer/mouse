@@ -1,0 +1,121 @@
+\newpage
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\section{Calculator with memory\label{calc}}
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+Back to the calculator from Section~\ref{arith}.
+We suggest one more improvement:
+the ability to store computed values for subsequent use.
+The idea is that  
+a session may look like this:
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ java Calc
+ > n = 3/2
+ > n = (3/n + n)/2
+ > (3/n + n)/2
+   1.7321428571428572
+\end{Verbatim}
+\normalsize
+
+In the first line we store the number \tx{3/2} under name "\tx{n}".
+In the second, we replace it by \tx{(3/n + n)/2}, computed using the stored value.
+Finally, we use the newest \tx{n} to compute one more value and print it.
+(Is it just an accident that the result resembles $\sqrt{3}$\,?)
+
+To achieve this kind of functionality, you can modify the grammar as follows:
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   Input   = Space (Store / Print) !_ ;
+   Store   = Name Space Equ Sum {store} ;
+   Print   = Sum {print} ;
+   Sum     = Sign Product (AddOp Product)* {sum} ;
+   Product = Factor (MultOp Factor)* {product} ;
+   Factor  = Digits? "." Digits Space {fraction}
+           / Digits Space {integer}
+           / Lparen Sum Rparen {unwrap} 
+           / Name Space {retrieve} ; 
+   Sign    = ("-" Space)? ;
+   AddOp   = [-+] Space ;
+   MultOp  = [*/]? Space ;
+   Lparen  = "(" Space ;
+   Rparen  = ")" Space ;
+   Equ     = "=" Space ;
+   Digits  = [0-9]+ ;
+   Name    = [a-z]+ ;
+   Space   = " "* ;
+\end{Verbatim}
+\normalsize
+
+We have here two alternative forms of \tx{Input}
+to perform the two tasks,
+and one more way to obtain a \tx{Factor}: 
+by retrieving a stored result.
+The results will be stored in a hash table \tx{dictionary}
+that resides in the semantics object.
+
+The semantic actions for \tx{Store} and \tx{Print} are:
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   //-------------------------------------------------------------------
+   //  Store = Name Space Equ Sum
+   //            0    1    2   3
+   //-------------------------------------------------------------------
+   void store()
+     { dictionary.put(rhs(0).text(),(Double)rhs(3).get()); }
+\end{Verbatim}
+\normalsize
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   //-------------------------------------------------------------------
+   //  Print = Sum
+   //           0
+   //-------------------------------------------------------------------
+   void print()
+     { System.out.println((Double)rhs(0).get()); }
+\end{Verbatim}
+\normalsize
+
+\newpage
+The stored result is retrieved by semantic action
+for the fourth alternative of \tx{Factor}:
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   //-------------------------------------------------------------------
+   //  Factor = Name Space
+   //             0    1
+   //-------------------------------------------------------------------
+   void retrieve()
+     {
+       String name = rhs(0).text();
+       Double d = dictionary.get(name);
+       if (d==null)
+       {
+         d = (Double)Double.NaN;
+         System.out.println
+           (rhs(0).where(0) + ": '" + name + "' is not defined.");
+       }
+       lhs().put(d);
+     }
+\end{Verbatim}
+\normalsize
+
+You have to handle the case where the name is not in the dictionary.
+The example shown here returns in such a case a \tx{NaN} (Not a Number) object. 
+Using \tx{NaN} in subsequent calculations produces inevitably a \tx{NaN} result.
+A message printed to \tx{System.out} explains where this \tx{NaN} comes from.
+Note the call to \tx{rhs(0).where(0)} that returns a text telling where to find the name
+in the input. 
+
+You find the modified grammar and semantics in \tx{example7}.
+You find there also a file \tx{Calc.java} containing invocation of the calculator.
+Copy these files to \tx{work} directory, generate a new parser, and compile
+everything.
+You can now invoke the calculator as shown at the beginning of this section.

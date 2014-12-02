@@ -1,0 +1,145 @@
+\newpage
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\section{Getting more realistic}
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+Our example so far is not very realistic.
+Any decent parser will allow white space in the input.
+This is simply achieved in PEG by defining \Space\
+as a sequence of zero or more blanks,
+and inserting \Space\ in strategic places.
+We are going to do this, and on this occasion add two features:
+an optional minus sign in front of the first \Number,
+and an alternative minus between the \Number s:
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   Sum     = Space Sign Number (AddOp Number)* !_ {sum} ;
+   Number  = Digits Space {number} ; 
+   Sign    = ("-" Space)? ;
+   AddOp   = [-+] Space ;
+   Digits  = [0-9]+ ;
+   Space   = " "* ;
+\end{Verbatim}
+\normalsize
+
+The semantic action \Numbera\ will now see this configuration
+of the "right-hand side":
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.9]
+ Digits Space
+   0      1
+\end{Verbatim}
+\normalsize
+
+The text to be converted is now represented by \tx{rhs(0)} rather than \tx{lhs()},
+so \Numbera\ appears as follows:
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   //-------------------------------------------------------------------
+   //  Number = Digits Space
+   //             0      1
+   //-------------------------------------------------------------------
+   void number()
+     { lhs().put(Integer.valueOf(rhs(0).text())); }
+\end{Verbatim}
+\normalsize
+
+Note that we could have defined \Number\ as \tx{[0-9]+~Space},
+but this would present \Numbera\ with a "right-hand side" of variable length,
+and give it a job of collecting all the digits.
+It is much easier to let the parser do the job.
+
+The semantic action \Suma\ will see this configuration
+of the "right-hand side":
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.9]
+ Space Sign Number AddOp Number ... AddOp Number
+   0     1    2      3     4         n-2   n-1
+\end{Verbatim}
+\normalsize
+
+where $n = 2p + 3$ for $p = 0, 1, 2, \ldots\;$.
+
+The text for \Sign\ is either an empty string
+or a minus followed by zero or more blanks.
+You can check which is the case with 
+the helper method \tx{isEmpty()}.
+The text for \tx{AddOp} is either a plus or a minus  
+followed by zero or more blanks.
+You can obtain the first character of this text with
+the helper method \tx{charAt()}.
+This gives the following new version of \Suma:
+
+\smallskip
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   //-------------------------------------------------------------------
+   //  Sum = Space Sign Number AddOp Number ... AddOp Number
+   //          0     1    2      3     4         n-2   n-1
+   //-------------------------------------------------------------------
+   void sum()
+     {
+       int n = rhsSize();
+       int s = (Integer)rhs(2).get();
+       if (!rhs(1).isEmpty()) s = -s;
+       for (int i=4;i<n;i+=2)
+       {
+         if (rhs(i-1).charAt(0)=='+')
+           s += (Integer)rhs(i).get();
+         else
+           s -= (Integer)rhs(i).get();
+       }
+       System.out.println(s);
+     }
+\end{Verbatim}
+\normalsize
+
+Note again that we could have \tx{("-"~Space)?} instead of \tx{Sign} in the definition of \Sum\,.
+But, according to the rule given in Section~\ref{RHS}, 
+\Suma\ would then have to handle two different configuration
+of the "right-hand side": 
+one starting with (\tx{Space~"-"~Space~Number}...)
+and one starting with (\tx{Space~Number}...).
+In our definition of \Sum, \Sign\ is always there, even if the underlying (\tx{"-"~Space}) failed.
+Note that \Space\ is also present even if it did not consume any blanks.
+
+The above illustrates the fact that you have to exercise a lot of care when defining 
+rules that will have semantic actions.
+Introducing \Digits\ and \Sign\ as separate named expressions
+made the "right-hand side" in each case easier to handle.
+For reasons that should now be obvious, you are not recommended
+to have repetitions or optional expressions inside repetitions.
+A clever programming of semantic action can always handle them,
+but the job is much better done by the parser.
+
+You find the grammar and the semantics class for this example
+as \tx{myGrammar.txt} and \tx{mySemantics.java} in \tx{example3}.
+Copy them to the \tx{work} directory (replacing the old ones),
+generate the parser, and compile it as before.
+A session with the new parser may look like this:
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+java mouse.TryParser -P myParser
+>   17 + 4711
+4728
+> -1 + 2 - 3
+-2
+>
+\end{Verbatim}
+\normalsize
+
+To close this section, note that you implemented here some functions
+traditionally delegated to a separate "lexer": conversion of integers
+and ignoring white space.
+If you wanted, you could easily include newlines and comments in \Space.
+
+
+
+

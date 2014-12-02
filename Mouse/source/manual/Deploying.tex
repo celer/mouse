@@ -1,0 +1,61 @@
+\newpage
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\section{Deploying the parser}
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+To include the generated parser in your application, you need to include
+your parser and semantics class, in the package of your choice
+(specified by the \tx{-p} option on \tx{mouse.Generate}).
+
+You also need the standard \Mouse\ package \tx{mouse.runtime}.
+It is included in the \tx{JAR} file \tx{Mouse-\Version.jar},
+and is also provided as a separate \tx{JAR} file \tx{Mouse-\Version.runtime.jar}.
+It is sufficient to have any of them accessible via \tx{CLASSPATH}.
+You may also extract the directory \tx{mouse/runtime} from any
+of these \tx{JAR} files and make it accessible via \tx{CLASSPATH}.
+
+Alternatively, you can integrate the runtime support
+into your package.
+You can use for this purpose the \Mouse\ tool \tx{MakeRuntime}.
+For example, the command:
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+   mouse.MakeRuntime -r my.runtime
+\end{Verbatim}
+\normalsize
+
+produces in the current work directory the source code of all
+runtime support classes, with declaration \tx{"package my.runtime;"}.
+By specifying the option \tx{-r my.runtime} on the invocation
+of \tx{Generate}, your generated parser will be an extension of \tx{my.runtime.ParserBase}
+rather than \tx{mouse.runtime.ParserBase}.
+The generated skeleton of your semantics class 
+will be an extension of \tx{my.runtime.SemanticsBase}.\linebreak
+(If you create the class on your own, you have to declare it so.)
+
+The runtime support consists of nine classes:
+
+\begin{tabular}{lll}
+&-- \tx{ParserBase}.& \\
+&-- \tx{SemanticsBase}.& \\
+&-- \tx{ParserMemo} &-- extension of \tx{ParserBase}. \\
+&-- \tx{ParserTest} &-- extension of \tx{ParserMemo}. \\
+&-- \tx{CurrentRule} &-- interface for accessing parser stack. \\
+&-- \tx{Phrase} &--  interface for accessing \Phrase\ objects. \\
+&-- \tx{Source} &-- interface of input wrappers. \\
+&-- \tx{SourceFile} &-- wrapper for input from a file. \\
+&-- \tx{SourceString} &-- wrapper for input from a \tx{String}.
+\end{tabular}
+
+Of these, you need \tx{ParserMemo} only if you generate the memoizing (\tx{-M})
+or the instrumented (\tx{-T}) version of the parser.
+You need \tx{ParserTest} only for the instrumented version.
+Of \tx{SourceFile} and \tx{SourceString} you need only the one that you use.
+
+\tx{SourceFile} assumes that the input file uses default character encoding.
+You can change it by modifying \tx{SourceFile.java} in the place
+indicated by a comment.
+

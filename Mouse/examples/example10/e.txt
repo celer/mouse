@@ -1,0 +1,46 @@
+
+
+n = 0  
+f = 1
+e = 1
+e
+n = n + 1 
+f = f * n
+e = e + 1/f  
+e
+n = n + 1 
+f = f * n
+e = e + 1/f  
+e
+n = n + 1 
+f = f * n
+e = e + 1/f  
+e
+n = n + 1 
+f = f * n
+e = e + 1/f  
+e
+n = n + 1 
+f = f * n
+e = e + 1/f  
+e
+n = n + 1 
+f = f * n
+e = e + 1/f  
+e
+n = n + 1 
+f = f * n
+e = e + 1/f  
+e
+n = n + 1 
+f = f * n
+e = e + 1/f  
+e
+n = n + 1 
+f = f * n
+e = e + 1/f  
+e
+n = n + 1 
+f = f * n
+e = e + 1/f  
+e  

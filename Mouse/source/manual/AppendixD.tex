@@ -1,0 +1,244 @@
+\newpage
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\section{Appendix: \Mouse\ tools\label{tools}}
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\fbox{ \textbf{mouse.Generate}\textit{ arguments}\prop}
+
+\medskip
+Generates parser.\newline
+The \textit{arguments} are specified as options according to POSIX syntax:
+%
+\ul
+\item[\tx{-G} \textit{filename}]\ \newline
+    Identifies the file containing your grammar. Mandatory.\newline
+    The \textit{filename} need not be a complete path, 
+    just enough to identify the file\newline 
+    in current environment.
+    It should include file extension, if any. 
+
+\item[\tx{-D} \textit{directory}]\ \newline
+    Identifies target directory to receive the generated file(s).\newline
+    Optional. If omitted, files are generated in current work directory.\newline 
+    The \textit{directory} need not be a complete path, just enough to identify
+    the directory\newline 
+    in current environment. The directory must exist.
+
+\item[\tx{-P} \textit{parser}]\ \newline
+    Specifies name of the parser to be generated. Mandatory.\newline
+    Must be an unqualified class name.
+    The tool generates a file named "\textit{parser}\tx{.java}"
+    in the target directory,
+    The file contains definition of Java class \textit{parser}.
+    If target directory already contains a file "\textit{parser}\tx{.java}",
+    the file is replaced without a warning,
+
+\item[\tx{-S} \textit{semantics}]\ \newline
+    Indicates that semantic actions are methods in the Java class \textit{semantics}.\newline
+    Mandatory if your grammar specifies semantic actions.
+    Must be an unqualified class name.
+
+\item[\tx{-p} \textit{package}]\ \newline
+    Generate parser as member of package \textit{package}.\newline  
+    The semantics class, if specified, is assumed to belong to the same package.\newline
+    Optional. If not specified, both classes belong to unnamed package.\newline
+    The specified package need not correspond to the target directory.
+
+\item[\tx{-r} \textit{runtime-package}]\ \newline
+    Generate parser that will use runtime support package \textit{runtime-package}.\newline  
+    Optional. If not specified, \tx{mouse.runtime} is assumed.
+
+\item[\tx{-s}]
+    Generate skeleton of semantics class. Optional.\newline
+    The skeleton is generated as file "\textit{semantics}\tx{.java}" in the target directory,
+    where \textit{semantics} is the name specified by \tx{-S} option.
+    The option is ignored if \tx{-S} is not specified.
+    If target directory already contains a file "\textit{semantics}\tx{.java}",
+    the tool is not executed, to prevent accidental destruction of your semantics class.    
+
+\item[\tx{-M}] Generate memoizing version of the parser.
+
+\item[\tx{-T}] Generate instrumented test version of the parser.
+
+\eul
+
+(Options \tx{-M} and \tx{-T} are mutually exclusive.)
+
+%----------------------------------------------------------------------
+\newpage
+\fbox{ \textbf{mouse.TestPEG}\textit{ arguments}\prop}
+
+\medskip
+Checks your grammar without generating parser.\newline
+The \textit{arguments} are specified as options according to POSIX syntax:
+%
+\ul
+\item[\tx{-G} \textit{filename}]\ \newline
+    Identifies the file that contains your grammar. Mandatory.\newline
+    The \textit{filename} should include any extension.\newline 
+    Need not be a complete path, just enough to identify the file
+    in your environment.
+
+\item[\tx{-D}]Display the grammar. Optional.\newline
+    Shows the rules and subexpressions together with their attributes according to Ford.\newline
+    (\tx{0}=may consume empty string, \tx{1}=may consume nonempty string, 
+    \tx{f}= may fail, \tx{!WF}=not well-formed.)
+
+\item[\tx{-C}] 
+    Display the grammar in compact form: without duplicate subexpressions. Optional.
+
+\item[\tx{-R}] 
+    Display only the rules. Optional.
+\eul
+
+(Obviously, \tx{-C}, \tx{-D}, and \tx{-R} are mutually exclusive.)
+
+%----------------------------------------------------------------------
+\bigskip
+\fbox{ \textbf{mouse.TryParser}\textit{ arguments}\prop}
+
+\medskip
+Runs the generated parser.\newline
+The \textit{arguments} are specified as options according to POSIX syntax:
+%
+\ul
+
+\item[\tx{-P} \textit{parser}]\ \newline
+    Identifies the parser. Mandatory.\newline
+    \textit{parser} is the class name, fully qualified with package name, if applicable.
+    The class must reside in a directory corresponding to the package.
+
+\item[\tx{-f} \textit{filename}]\ \newline
+    Apply the parser to file \textit{filename}. Optional.\newline
+    The \textit{filename} should include any extension.\newline 
+    Need not be a complete path, just enough to identify the file
+    in your environment.
+
+\item[\tx{-F} \textit{list}]\ \newline
+    Apply the parser separately to each file in a list of files. Optional.\newline
+    The \textit{list} identifies a text file containing one fully qualified file name per line.
+    The \textit{list} itself need not be a complete path, just enough to identify the file
+    in your environment.
+
+\item[\tx{-m} \textit{n}]\ \newline
+    Amount of memoization. Optional. Applicable only to a parser generated with option \tx{-M}.\newline 
+    \textit{n} is a digit from 1 through 9 specifying the number of results to be cached. 
+    Default is no memoization.
+    
+\item[\tx{-T} \textit{string}]\ \newline
+    Tracing switches. Optional.\newline
+    The \textit{string} is assigned to the \tx{trace} field in your semantics object,
+    where you can use it to activate any trace you have programmed there.
+
+\item[\tx{-t}] Display timing information.\newline
+    Note that the precision of time measurements corresponds to the granularity of the system's clock.
+    Also, that Java's execution times may vary.
+
+\eul
+
+Options \tx{-f} and \tx{-F} are mutually exclusive.
+
+If you do not specify \tx{-f} or \tx{-F}, 
+the parser is executed interactively, prompting for input by printing "\tx{>}".
+It is invoked separately for each input line after you press "Enter".
+You terminate the session by pressing "Enter" directly at the prompt.
+
+%----------------------------------------------------------------------
+\newpage
+\fbox{ \textbf{mouse.TestParser}\textit{ arguments}\prop}
+
+\medskip
+Runs the instrumented parser (generated with option \tx{-T}),
+and prints information about its operation,
+as explained in Sections \ref{back}, 
+\ref{packrat}, and~\ref{back2}.
+%
+\ul
+
+\item[\tx{-P} \textit{parser}]\ \newline
+    Identifies the parser. Mandatory.\newline
+    \textit{parser} is the class name, fully qualified with package name, if applicable.
+    The class must reside in a directory corresponding to the package.
+
+\item[\tx{-f} \textit{filename}]\ \newline
+    Apply the parser to file \textit{filename}. Optional.\newline
+    The \textit{filename} should include any extension.\newline 
+    Need not be a complete path, just enough to identify the file
+    in your environment.
+
+\item[\tx{-F} \textit{list}]\ \newline
+    Apply the parser separately to each file in a list of files. Optional.\newline
+    The \textit{list} identifies a text file containing one fully qualified file name per line.
+    The \textit{list} itself need not be a complete path, just enough to identify the file
+    in your environment.
+
+\item[\tx{-m} \textit{n}]\ \newline
+    Amount of memoization. Optional.\newline 
+    \textit{n} is a digit from 1 through 9 specifying the number of results to be retained.
+    Default is no memoization.
+
+\item[\tx{-T} \textit{string}]\ \newline
+    Tracing switches. Optional,\newline
+    The \textit{string} is assigned to the \tx{trace} field in your semantics object,
+    where you can use it to trigger any trace you have programmed there.
+    In addition, presence of certain letters in \textit{string}
+    activates traces in the parser:\newline
+    \tx{r} -- trace execution of parsing procedures for rules.\newline
+    \tx{i} -- trace execution of parsing procedures for inner expressions.\newline
+    \tx{e} -- trace error information.
+        
+\item[\tx{-d}]
+    Show detailed statistics for procedures involved in backtracking - rescan - reuse. Optional.
+        
+\item[\tx{-D}]
+    Show detailed statistics for all invoked procedures. Optional.
+    
+\item[\tx{-C} \textit{filename}]\ \newline
+    Write all statistics as comma-separated values (CSV) to file \textit{filename},
+    rather than to System.out.\newline
+    Optional; can only be specified with \tx{-F}.\newline
+    The \textit{filename} should include any extension.\newline
+    Need not be a complete path, just enough to identify the file
+    in your environment.\newline
+    If the file \textit{filename} exists, it is overwriten.
+    Otherwise the file is created.
+
+\item[\tx{-t}] Display timing information.
+
+\eul
+
+Options \tx{-f} and \tx{-F} are mutually exclusive, as well as \tx{-d} and \tx{-D}.
+
+If you do not specify \tx{-f} or \tx{-F}, 
+the parser is executed interactively, prompting for input by printing "\tx{>}".
+It is invoked separately for each input line after you press "Enter".
+You terminate the session by pressing "Enter" directly at the prompt.
+
+
+%----------------------------------------------------------------------
+\bigskip
+\fbox{ \textbf{mouse.MakeRuntime}\textit{ arguments}\prop}
+
+\medskip
+Re-package \Mouse\ runtime support:
+write out Java source files for runtime-support classes\newline
+using specifed package name instead of \tx{mouse.runtime}.\newline
+The \textit{arguments} are specified as options according to POSIX syntax:
+%
+\ul
+\item[\tx{-r} \textit{runtime-package}]\ \newline
+    Generate files with package name \textit{runtime-package}. Mandatory.  
+    
+\item[\tx{-D} \textit{directory}]\ \newline
+    Identifies target directory to receive the files.\newline
+    Optional. If omitted, files are written to the current work directory.\newline 
+    The \textit{directory} need not be a complete path, just enough to identify
+    the directory\newline 
+    in current environment. The directory must exist.\newline
+    The directory name need not correspond to the package name.
+
+\eul
+
+

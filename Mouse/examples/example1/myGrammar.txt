@@ -1,0 +1,5 @@
+
+   // Example 1
+
+   Sum    = Number ("+" Number)* !_ ;
+   Number = [0-9]+ ;

@@ -1,0 +1,158 @@
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\section{Full arithmetic\label{arith}}
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+As the next development, we suggest adding multiplication, division
+and parentheses:
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   Input   = Space Sum !_ {result} ;
+   Sum     = Sign Product (AddOp Product)* {sum} ;
+   Product = Factor (MultOp Factor)* {product} ;
+   Factor  = Digits? "." Digits Space {fraction}
+           / Digits Space {integer}
+           / Lparen Sum Rparen {unwrap} ;
+   Sign    = ("-" Space)? ;
+   AddOp   = [-+] Space ;
+   MultOp  = [*/]? Space ;
+   Lparen  = "(" Space ;
+   Rparen  = ")" Space ;
+   Digits  = [0-9]+ ;
+   Space   = " "* ;
+\end{Verbatim}
+\normalsize
+
+We have replaced here \Number\ by \tx{Factor} that can be 
+a fraction, an integer, or a sum in parentheses.
+
+We have added \tx{Product} with multiplication and division
+to ensure, in a syntactical way, the priority of these operations
+over addition and subtraction.
+The omitted operator in \tx{MultOp} is intended to mean multiplication.
+
+As \Sum\ can now appear in \tx{Factor},
+we had to add \Input\ as new top level, 
+moving there the initial \Space\ and the check for end of input.
+
+The semantic action \Suma\ cannot now print its result;
+instead, the result will be inserted as semantic value 
+into the \Sum's result,
+to be retrieved by the semantic action of \Input\ or \Factor:
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   //-------------------------------------------------------------------
+   //  Sum = Sign Product AddOp Product ... AddOp Product
+   //          0     1      2      3         n-2    n-1
+   //-------------------------------------------------------------------
+   void sum()
+     {
+       int n = rhsSize();
+       double s = (Double)rhs(1).get();
+       if (!rhs(0).isEmpty()) s = -s;
+       for (int i=3;i<n;i+=2)
+       {
+         if (rhs(i-1).charAt(0)=='+')
+           s += (Double)rhs(i).get();
+         else
+           s -= (Double)rhs(i).get();
+       }
+       lhs().put(new Double(s));
+     }
+\end{Verbatim}
+\normalsize
+
+This assumes, of course, that \Product\ delivers its result as semantic value
+of its result.
+The semantic action \Producta\ follows the same pattern as \Suma:
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   //-------------------------------------------------------------------
+   //  Product = Factor MultOp Factor ... MultOp Factor 
+   //               0     1      2         n-2     n-1
+   //-------------------------------------------------------------------
+   void product()
+     {        
+       int n = rhsSize();
+       double s = (Double)rhs(0).get();
+       for (int i=2;i<n;i+=2)
+       {
+         if (!rhs(i-1).isEmpty() && rhs(i-1).charAt(0)=='/')
+           s /= (Double)rhs(i).get();
+         else  
+           s *= (Double)rhs(i).get();
+       }  
+       lhs().put(new Double(s));
+     }
+\end{Verbatim}
+\normalsize
+
+(\tx{MultOp} 
+means division if it is a nonempty string starting with with \tx{"/"};
+otherwise it is multiplication.)
+
+Note that the precedence of multiplication and division 
+over addition and subtraction is here defined by the syntax.
+However, the order of operations within each class (left to right)
+is \emph{not} defined by the syntax, but by semantic actions.
+
+The actions \tx{fraction()} and \tx{integer()} 
+remain the same as in the preceding example.
+The function of \tx{unwrap()} is to take the semantic value of \Sum\
+and deliver it as the semantic value of \Factor:
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   //-------------------------------------------------------------------
+   //  Factor = Lparen Sum Rparen 
+   //              0    1    2
+   //-------------------------------------------------------------------
+   void unwrap()
+     { lhs().put(rhs(1).get()); }
+\end{Verbatim}
+\normalsize
+
+No casts are needed.
+It remains to print the result:
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   //-------------------------------------------------------------------
+   //  Input = Space Sum !_
+   //            0    1
+   //-------------------------------------------------------------------
+   void result()
+     { System.out.println((Double)rhs(1).get()); }
+\end{Verbatim}
+\normalsize
+
+The modified grammar and semantics are available in \tx{example5};
+you may copy them 
+into the \tx{work} directory,
+then generate and compile the parser as before.
+The session may now look like this:
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ java mouse.TryParser -P myParser
+ > 2(1/10)
+ 0.2
+ > (1+2)*(3-4)
+ -3.0
+ > 1.23(-4+.56)
+ -4.2312
+ >
+\end{Verbatim}
+\normalsize
+
+Notice that the multiplication operator can, in particular, be the empty string.
+This would cause an ambiguity in the classical context-free grammar,
+where \tx{"234"} could be parsed as meaning \tx{2*3*4}, \tx{23*4}, or \tx{2*34}.
+However, there is no place for ambiguity in the parser specified by PEG:
+it will always read the string as integer \tx{234}.
+Which is, by the way, exactly how a human reader sees it.
+

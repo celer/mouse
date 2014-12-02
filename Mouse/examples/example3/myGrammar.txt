@@ -1,0 +1,9 @@
+    
+   // Example 3
+
+   Sum     = Space Sign Number (AddOp Number)* !_ {sum} ;
+   Number  = Digits Space {number} ; 
+   Sign    = ("-" Space)? ;
+   AddOp   = [-+] Space ;
+   Digits  = [0-9]+ ;
+   Space   = " "* ;

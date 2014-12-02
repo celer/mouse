@@ -1,0 +1,55 @@
+\newpage
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\section{A mouse, not a pack rat\label{packrat}}
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+As mentioned in the introduction, \Mouse\ can provide a small degree of memoization.
+You can exercise this possibility by specifying the option \tx{-m} 
+to \tx{TestParser}. 
+You follow it by a digit from 1 to 9, indicating how many most recent results
+you want to keep.
+For example, your session from the previous section, with procedures
+caching one result, will appear like this: 
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ java mouse.TestParser -PmyParser -d -m1
+
+ > 123 + 4567   
+ 4690.0
+
+ 42 calls: 25 ok, 13 failed, 2 backtracked.
+ 0 rescanned, 2 reused.
+ backtrack length: max 4, average 3.5.
+
+ Backtracking, rescan, reuse:
+
+ procedure        ok  fail  back  resc reuse totbk maxbk at             
+ ------------- ----- ----- ----- ----- ----- ----- ----- --             
+ Digits            2     0     0     0     2     0     0
+ Number_0          0     0     2     0     0     7     4 After '123 + ' 
+
+ >
+\end{Verbatim}
+
+\normalsize
+You can see here that the parser reused the cached result
+of \Digits\ on two occasions, thus eliminating the unnecessary rescanning by \tx{[0-9]}.
+
+\medskip
+If you decide you want memoization, you can generate a version of the parser
+that allows it, without all the instrumentation overhead.
+You do it by specifying the option \tx{-M} on \tx{mouse.Generate}.
+You specify then the amount of memoization by means of \tx{-m} option
+in the same way as above.
+
+When deciding whether you want memoization or not, you should consider 
+the fact that it introduces some overhead.
+It may cost more in performance than some moderate rescanning.
+In the current version of \Mouse,
+memoization is not applied 
+to the services for terminals 
+because the overhead of memoization was felt to be larger
+than the job of rescanning a terminal.

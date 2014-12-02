@@ -1,0 +1,16 @@
+    
+   // Example 6
+
+   Input   = Space Sum !_ {result} ;
+   Sum     = Sign Product (AddOp Product)* {sum} ;
+   Product = Factor (MultOp Factor)* {product} ;
+   Factor  = Digits? "." Digits Space {fraction}
+           / Digits Space {integer}
+           / Lparen Sum Rparen {unwrap} ;
+   Sign    = ("-" Space)? ;
+   AddOp   = [-+] Space ;
+   MultOp  = [*/]? Space ;
+   Lparen  = "(" Space ;
+   Rparen  = ")" Space ;
+   Digits  = [0-9]+ ;
+   Space   = " "* ;

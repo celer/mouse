@@ -1,0 +1,26 @@
+    
+   // Example 10
+   
+   Input   = [\n\r]* Line++ EOF ;
+   Line    = Space (Store / Print) ~{badLine}
+           / BadLine ;
+   Store   = Name Space Equ Sum EOL {store} ;    // store result
+   Print   = Sum EOL {print} ;                   // print result
+   BadLine = _++ EOL ;                           // skip bad line
+   Sum     = Sign Product (AddOp Product)* {sum} ;
+   Product = Factor (MultOp Factor)* {product} ;
+   Factor  = Digits? "." Digits Space {fraction}
+           / Digits Space {integer}
+           / Lparen Sum Rparen {unwrap} 
+           / Name Space {retrieve} ; 
+   Sign    = ("-" Space)? ;
+   AddOp   = [-+]  Space <+ or -> ;
+   MultOp  = [*/]? Space <* or /> ;
+   Lparen  = "("   Space <(> ;
+   Rparen  = ")"   Space <)> ;
+   Equ     = "="   Space <=> ;
+   Digits  = [0-9]+ ;
+   Name    = [a-z]+ ;
+   Space   = " "* {space} ;
+   EOL     = [\n\r]+ / EOF <end of line> ;
+   EOF     = !_ <end of file> ;

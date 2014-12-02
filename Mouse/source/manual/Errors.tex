@@ -1,0 +1,163 @@
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\section{Get error handling right\label{errors}}
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+Try the following with the calculator just constructed:
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ java Calc
+ > 2a
+ After '2': 'a' is not defined
+ NaN
+ > a = 12(
+ After 'a = 12': expected Space or Sum
+ > a
+ 12.0
+ > 2a)
+ 24.0
+ After '2a': expected [a-z] or Space or MultOp or Factor or AddOp or end of text
+ > 
+\end{Verbatim}
+\normalsize
+
+Note that the input \tx{"a = 12("} resulted in failure,
+but response to the subsequent input \tx{"a"} shows that \tx{"a"}
+has been defined.
+The input \tx{"2a)"} resulted again in failure,
+but the result of \tx{"2a"} has been printed.
+
+What happens?
+
+In the first case, \Store\ successfully consumed \tx{"a = 12"},
+and its action \Storea\ entered \tx{"a"} into the dictionary with \tx{12} as value.
+Then it returned success to \Input\, which failed by finding \tx{"("} instead of end of text,
+backtracked, and issued the error message.
+%
+In the second case, \Print\ successfully consumed \tx{"2a"}, printed its result,
+and returned succes to \Input\, wich failed by not finding end of text.
+
+The moral of the story is that \textbf{you must not take any irreversible actions
+in a situation that can be reversed by backtracking}.
+
+A simple solution in this case is by making the predicate \tx{"!\_"} part 
+of \Store\ and \Print:
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   Input   = Space (Store / Print) ;
+   Store   = Name Space Equ Sum !_ {store} ;
+   Print   = Sum !_ {print} ;
+\end{Verbatim}
+\normalsize
+
+In this way, \Storea\ and \Printa\ are called only after the entire input
+has been successfully parsed.
+
+\medskip
+You may wonder why the message after \tx{"a = 12("} says nothing about the expected end of text.
+
+A non-backtracking parser stops after failing to find an expected character
+in the input text, and this failure
+is reported as \emph{the} syntax error.
+A backtracking parser may instead backtrack
+and fail several times.  
+It terminates and reports failure when no more
+alternatives are left.
+The strategy used by \Mouse\ is to report only the failure that occurred 
+farthest down in the input.
+If several different attempts failed at the same point,
+all such failures are reported.
+
+In the example, the message says that \tx{Lparen} expected blanks after \tx{"("},
+and that the third alternative of \Factor\ expected \Sum\ at that place.
+The failure to find end of text occurred earlier in the input and is not mentioned.
+
+\medskip
+In the case of \tx{"2a)"}, several procedures failed immediately after \tx{"2a"}.
+The processing did not advance beyond that point, so all these failures are reported.
+
+You may feel that information about 
+\tx{Space} not finding a blank is uninteresting noise. 
+To suppress it, you can define the following semantic action for \tx{Space}:
+%
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   //-------------------------------------------------------------------
+   //  Space = " "*
+   //-------------------------------------------------------------------
+   void space()
+     { lhs().errClear(); }
+\end{Verbatim}
+\normalsize
+%
+When \tx{space()} is invoked, the \tx{lhs()} object seen by it
+contains the information that \tx{Space()} ended
+by not finding another blank.
+The helper method \tx{errClear()} erases all failure information
+from the \tx{lhs()} object, so \tx{Space} will never report any failure.
+
+If you wish, you can make messages more readable by saying
+\tx{"+ or -"} instead of \tx{"AddOp"}.
+You specify such "diagnostic names" in pointed brackets at the end of a rule, like this:
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   AddOp   = [-+] Space  <+ or -> ;
+   MultOp  = [*/]? Space <* or /> ;
+   Lparen  = "(" Space   <(> ;
+   Rparen  = ")" Space   <)> ;
+   Equ     = "=" Space   <=> ;
+\end{Verbatim}
+\normalsize
+
+A grammar and semantics with these modifications are found in \tx{example8}.
+Copy them to the \tx{work} directory, generate new parser (replacing the old), and compile both.
+A parser session may now appear like this:
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ java Calc
+ > 2a
+ After '2': 'a' is not defined
+ NaN
+ > a = 12(
+ At start: 'a' is not defined 
+ After 'a = 12': expected Sum
+ > a
+ At start: 'a' is not defined 
+ NaN
+ > 2a)
+ After '2': 'a' is not defined
+ After '2a': expected [a-z] or * or / or Factor or + or - or end of text
+ >
+\end{Verbatim}
+\normalsize
+
+The message about \tx{"a"} not being defined in response to \tx{"a~=~12("} 
+is another example of an irreversible action
+in a situation reversed by backtracking.
+It appears because \Print\ is attempted after the failure of \Store,
+and issues the message before itself failing.
+Perhaps a better strategy should be invented for reporting undefined names,
+but it does not seem disturbing, and we leave it as it is.
+Note, however, that it would be entirely wrong if we reversed the order of \Store\ and \Print.
+In that case, a session would look like this:
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ java Calc
+ > a = 12
+ At start: 'a' is not defined
+ > a
+ 12.0
+ > 
+\end{Verbatim}
+\normalsize
+
+Here, the parser applies \Print\ first, reports \tx{"a"} undefined, fails by finding \tx{"="},
+backtracks, and successfully executes \Store.
+
+

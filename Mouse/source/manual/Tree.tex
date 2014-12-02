@@ -1,0 +1,159 @@
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\section{Want a tree?\label{tree}}
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+Many existing parsers deliver their result in the form of a syntax tree,
+showing how the input was parsed according to the grammar rules.
+The preceding examples show that much of this information may be
+uninteresting if the grammar is specified at the level
+of input characters rather than "tokens" produced by a "lexer".
+For example, the structure of our fractional number 
+in terms of individual characters is not interesting 
+as long as we only want the complete string.
+For this reason, \Mouse\ does not provide automatic construction
+of syntax trees.
+
+If you wish, you may still construct syntax tree at the desired level of detail
+with the help of semantic actions.
+In the following, we show how the preceding example
+can be modified to produce an operand-operator tree
+instead of calculating the result.
+Such tree can be then further processed
+(for example, to generate executable code).
+All you need to construct the tree is write another semantics class,
+without changing the parser.
+
+Of course, you also need to define elements of the tree to be constructed.
+You find their definitions in the file \tx{Node.java} in \tx{example6}.
+It defines an abstract class \tx{Node} with two subclasses:
+\tx{Node.Num} and \tx{Node.Op},
+to represent, respectively, a number 
+and a binary operator.
+%
+In order to simplify the example, we do not provide separate subclasses
+for different kinds of numbers and operators.
+A number is stored in \tx{Node.Num} as the text string retrieved from the input;
+an operator is stored in \tx{Node.Op} as one character.
+
+The semantic values will now be partial trees, represented by their top nodes.
+The semantic actions will appear like this:
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   //-------------------------------------------------------------------
+   //  Factor = Digits? "."  Digits Space
+   //              0    1(0)  2(1)   3(2)
+   //-------------------------------------------------------------------
+   void fraction()
+     { lhs().put(new Node.Num(rhsText(0,rhsSize()-1))); }
+\end{Verbatim}
+\normalsize
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+  //-------------------------------------------------------------------
+  //  Sum = Sign Product AddOp Product ... AddOp Product
+  //          0     1      2      3         n-2    n-1
+  //-------------------------------------------------------------------
+  void sum()
+    {
+      int n = rhsSize();
+      Node N = (Node)rhs(1).get();
+      if (!rhs(0).isEmpty())
+        N = new Node.Op(new Node.Num("0"),'-',N);
+      for (int i=3;i<n;i+=2)
+        N = new Node.Op(N,rhs(i-1).charAt(0),(Node)rhs(i).get());
+      lhs().put(N);
+    }
+\end{Verbatim}
+\normalsize
+
+(Minus as \Sign\ is represented by subtraction from 0.)
+
+You find complete semantics in \tx{example6}.
+As you can see there, the final action, \tx{result()},
+saves the top node of the resulting tree in the variable \tx{tree},
+local to \tx{mySemantics}.
+You cannot use the standard tool \tx{mouse.TryParser} to obtain the 
+tree thus stored;
+you have to code invocation of the parser on your own.
+It will be an occasion to learn how this is done.
+The code is shown below.
+
+\medskip
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=6mm,xrightmargin=6mm,baselinestretch=0.8]
+   import mouse.runtime.SourceString;
+   import java.io.BufferedReader;
+   import java.io.InputStreamReader;
+
+   class Try
+   {
+     public static void main(String argv[])
+       throws Exception
+       {
+         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+         myParser parser = new myParser();            // Instantiate Parser+Semantics
+         while (true)
+         {
+           System.out.print("> ");                    // Print prompt
+           String line = in.readLine();               // Read line
+           if (line.length()==0) return;              // Quit on empty line
+           SourceString src = new SourceString(line); // Wrap up the line
+           boolean ok = parser.parse(src);            // Apply Parser to it
+           if (ok)                                    // If succeeded:
+           {
+             mySemantics sem = parser.semantics();    // Access Semantics
+             System.out.println(sem.tree.show());     // Get the tree and show it
+           }
+         }
+       }
+   }
+\end{Verbatim}
+\normalsize
+
+\medskip
+Most of it is self-explanatory. 
+The class \tx{SourceString} supplied by \Mouse\ is a wrapper for the parser's input.
+It contains methods needed to access the string and to print error position in diagnostics.
+After instantiating the parser, you apply it to the wrapped input
+by calling the method \tx{parse()}. 
+The method returns a \tx{boolean} result indicating whether the parse was successful.
+
+When the parser is instantiated, it also instantiates its semantics class.
+You can access that class by calling the method \tx{semantics()} 
+on the parser.
+You can then obtain the tree stored there.
+This is done in the last line that exploits the method \tx{show()}
+of \tx{Node} to print out the tree.
+
+The above code is found in \tx{example6}
+under the name \tx{Try.java}.
+Copy the files \tx{Node.java},\linebreak
+\tx{mySemantics.java}, and \tx{Try.java} 
+into the \tx{work} directory and compile them.
+You may now type \tx{java~Try} at the command prompt, and enter your
+input after "\tx{> }".
+You will get the resulting tree as a nested expression
+where each operator node with its sub-nodes is enclosed by a pair of brackets \tx{[ ]}.
+Your session may now look like this:
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ java Try
+ > 1+2+3
+   [[1+2]+3]
+ > 2(1/10)
+   [2*[1/10]]
+ > (1+2)*(3-4)
+   [[1+2]*[3-4]]
+ > 1.23(-4+.56)
+   [1.23*[[0-4]+.56]]
+ >
+\end{Verbatim}
+\normalsize
+
+This is not the most elegant presentation of a tree,
+but the purpose is just to check what was constructed.

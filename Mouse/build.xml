@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!--
+===========================================================================
+*
+*  INVOCATION
+*
+*  Stand in the distribution directory Mouse-1.6.1 and invoke Apache Ant:
+*
+*      ant -Ddest=<destdir> <targets>
+*
+*  where <destdir> is name of the directory to contain the result.
+*  This directory will be deleted if it exists  and then re-created.
+*  If you omit -D option, destdir is the subdirectory 'build' of Mouse-1.6.1.
+*
+*  <targets> are one or more of:
+*    full-jar     - build complete Mouse-1.6.1.jar
+*    runtime-jar  - build Mouse-1.6.1.runtime.jar
+*    compile      - compile all source to subdirectory 'mouse'
+*                  of destdir. It is included in the preceding two.
+*  Default is all of above.
+*
+*  2011-11-08 Created.
+*  2012-01-06 Updated for version 1.5.1.
+*  2013-04-15 Updated for version 1.6.
+*  2014-04-13 Updated for version 1.6.1.
+*
+* =========================================================================
+-->
+
+<project name="MakeMouse" basedir="." default="all" >
+
+  <property name="dest" value="${basedir}/build" />
+
+  <target name="all" depends="full-jar, runtime-jar" />
+
+  <target name="full-jar" depends="compile, rtsource">
+    <jar basedir="${dest}" destfile="${dest}/Mouse-1.6.1.jar" />
+    <delete dir="${dest}/rtsource" />
+  </target>
+
+  <target name="runtime-jar" depends="compile">
+    <jar basedir="${dest}/mouse/runtime"
+         destfile="${dest}/Mouse-1.6.1.runtime.jar" />
+  </target>
+
+  <target name="compile" depends="init">
+    <javac srcdir="${basedir}/source" destdir="${dest}" includeAntRuntime="no" />
+  </target>
+
+  <target name="rtsource" depends="rtdir" >
+    <copy todir="${dest}/rtsource">
+      <fileset dir="${basedir}/source/runtime" />
+    </copy>
+  </target>
+
+  <target name="rtdir" depends="init">
+    <mkdir dir="${dest}/rtsource"/>
+  </target>
+
+  <target name="init" depends="clean">
+    <mkdir dir="${dest}"/>
+  </target>
+
+  <target name="clean">
+    <delete dir="${dest}"/>
+  </target>
+
+</project>

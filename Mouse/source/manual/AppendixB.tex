@@ -1,0 +1,73 @@
+\newpage
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\section{Appendix: Helper methods\label{helper}}
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+These methods provide access to the environment seen by a semantic action.
+
+\bigskip
+The following four methods 
+are inherited from \tx{mouse.runtime.Semantics}.\newline
+They call back the parser to access the relevant \Phrase\ objects.
+
+\ul
+
+\item[\texttt{Phrase }\textbf{lhs}\texttt{()}]\upsp \newline   
+   Returns the left-hand side object.\dnsp
+
+\item[\texttt{int }\textbf{rhsSize}\texttt{()}]\upsp \newline 
+   Returns the number of right-hand side objects.\dnsp
+
+\item[\texttt{Phrase }\textbf{rhs}\texttt{(int i)}]\upsp \newline   
+   Returns the $i$-th element on the right-hand side, $0\le i <\,$\tx{rhsSize()}.\dnsp
+   
+\item[\texttt{String }\textbf{rhsText}\texttt{(int i,int j)}]\upsp \newline   
+   Returns as one \tx{String} the text
+   represented by the right-hand side objects $i$ through $j-1$,\newline  
+   where $0\leq i < j \le\,$\tx{rhsSize()}.\dnsp
+   
+\eul
+
+
+\bigskip
+The following eleven methods are defined by the interface \tx{mouse.runtime.Phrase}.
+
+\ul
+
+\item[\texttt{void }\textbf{put}\texttt{(Object v)}]\upsp \newline   
+   Inserts $v$ as the semantic value of this \Phrase.\dnsp
+
+\item[\texttt{Object }\textbf{get}\texttt{()}]\upsp \newline
+   Returns the semantic value of this \Phrase.\dnsp
+
+\item[\texttt{String }\textbf{text}\texttt{()}]\upsp \newline
+   Returns the text represented by this \tx{Phrase}.\dnsp
+
+\item[\texttt{char }\textbf{charAt}\texttt{(int i)}]\upsp \newline
+   Returns the $i$-th character of the text represented by this \tx{Phrase}.\dnsp   
+
+\item[\texttt{String }\textbf{rule}\texttt{()}]\upsp \newline
+   Returns name of the rule that created this \tx{Phrase}.\newline
+
+\item[\texttt{boolean }\textbf{isA}\texttt{(String name)}]\upsp \newline
+   Returns \tx{true} if this \tx{Phrase} was created by rule \textit{name}.\newline
+
+\item[\texttt{boolean }\textbf{isTerm}\texttt{()}]\upsp \newline
+   Returns \tx{true} if this \tx{Phrase} was created by a terminal.\newline
+
+\item[\texttt{boolean }\textbf{isEmpty}\texttt{()}]\upsp \newline
+   Returns \tx{true} if the text represented by this \tx{Phrase} is empty.\dnsp
+
+\item[\texttt{String }\textbf{errMsg}\texttt{()}]\upsp \newline   
+   Returns the error message contained in this \tx{Phrase}.\dnsp    
+
+\item[\texttt{void }\textbf{errClear}\texttt{()}]\upsp \newline
+   Erases the error message contained in this \tx{Phrase}.\dnsp   
+   
+\item[\texttt{String }\textbf{where}\texttt{(int i)}]\upsp \newline
+   Returns a printable string describing where to find the i-th character\newline
+   of text represented by this \tx{Phrase} in the text being parsed.\dnsp   
+   
+\eul

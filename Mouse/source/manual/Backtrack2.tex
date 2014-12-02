@@ -1,0 +1,70 @@
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\section{Backtracking again\label{back2}}
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+The grammar just constructed has another non-$LL(1)$ choice
+in addition to the choice between two kinds of number.
+It is the choice between \tx{Store} and \tx{Print} in \Input: 
+they can both start with \tx{Name}.
+
+If you enter something like "\tx{lambda * 7}",
+the parser tries \tx{Store} first and processes "\tx{lambda }",
+expecting to find equal sign next.
+Finding "\tx{*}" instead, the parser backtracks and tries \tx{Print}.
+It eventually comes to process "\tx{lambda }" via \tx{Sum}, \tx{Product},
+and \tx{Factor}.
+To watch this activity, you may generate test version of the parser using option \tx{-T},
+as described in Section~\ref{back} and try it.
+A possible result is shown below.
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.75]
+  java mouse.TestParser -PmyParser -d
+
+  > lambda = 12
+ 
+  62 calls: 31 ok, 30 failed, 1 backtracked.
+  10 rescanned.
+  backtrack length: max 2, average 2.0.
+
+  Backtracking, rescan, reuse:
+
+  procedure        ok  fail  back  resc reuse totbk maxbk at             
+  ------------- ----- ----- ----- ----- ----- ----- ----- --             
+  Digits            2     2     0     2     0     0     0
+  Space             5     0     0     1     0     0     0
+  Factor_0          0     1     1     0     0     2     2 After 'lambda = '
+  [0-9]             4     4     0     5     0     0     0
+  " "               2     5     0     1     0     0     0
+  "."               0     2     0     1     0     0     0
+  
+  > lambda * 7
+  84.0
+    
+  87 calls: 41 ok, 44 failed, 2 backtracked.
+  22 rescanned.
+  backtrack length: max 7, average 4.0.
+
+  Backtracking, rescan, reuse:
+
+  procedure        ok  fail  back  resc reuse totbk maxbk at             
+  ------------- ----- ----- ----- ----- ----- ----- ----- --             
+  Store             0     0     1     0     0     7     7 At start       
+  Digits            2     4     0     3     0     0     0
+  Name              2     1     0     1     0     0     0
+  Space             6     0     0     2     0     0     0
+  Factor_0          0     2     1     0     0     1     1 After 'lambda * '
+  [0-9]             2     6     0     5     0     0     0
+  " "               3     6     0     3     0     0     0  
+  [a-z]            12     3     0     7     0     0     0
+  "."               0     3     0     1     0     0     0
+  
+  >
+\end{Verbatim}
+\normalsize
+
+This is quite a lot of rescanning; you may try to see the effects of specifying
+"\tx{-m1}":
+the number of rescans is reduced to 2 for each input.

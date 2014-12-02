@@ -1,0 +1,96 @@
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\section{Introduction: recursive-descent parsers with backtracking}
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+Parsing Expression Grammar (PEG),
+introduced by Ford in \cite{Ford:2002,Ford:Thesis,Ford:2004},
+is a new way to specify a recursive-descent parser with limited backtracking.
+ 
+Recursive-descent parsers have been around for a while.
+Already in 1961, Lucas \cite{Lucas:1961} suggested the use of recursive procedures
+that reflect the syntax of the language being parsed.
+This close connection between the code and the grammar
+is the great advantage of recursive-descent parsers.
+It makes the parser easy to maintain and modify.
+
+A recursive-descent parser is simple to construct
+from a classical context-free grammar
+if the grammar has the so-called $LL(1)$ property;
+it means that the parser can always decide what to do
+by looking at the next input character.
+However, forcing the language into the $LL(1)$ mold 
+can make the grammar -- and the parser -- unreadable.
+
+The $LL(1)$ restriction can be circumvented by the use of backtracking.
+Backtracking means that the parser proceeds by trial and error:
+goes back and tries another alternative if it took a wrong decision.
+However, an exhaustive search
+of all alternatives may require an exponential time.
+A reasonable compromise is limited backtracking, 
+also called "fast-back" in \cite{Hopgood:1969}.
+
+Limited backtracking was adopted in at least two of the early top-down designs:
+the Atlas Compiler Compiler 
+of Brooker and Morris \cite{Brooker:Morris:1961,Rosen:1964},  
+and TMG (the TransMoGrifier) of McClure \cite{McClure:1965}.
+The syntax specification used in TMG was later formalized and analyzed
+by Birman and Ullman \cite{Birman:1970,Birman:Ullman:1973}.
+It appears in~\cite{Aho:Ullman:1972} as "Top-Down Parsing Language" (TDPL)
+and "Generalized TDPL" (GTDPL).
+Parsing Expression Grammar is a development of this latter.
+
+The name "Grammar" may be confusing when applied to what 
+is essentially a top-down parsing language,
+but it was introduced in \cite{Ford:2004} as a new,
+recognition-based, method of defining syntax.
+It also has an appearance similar to grammars in the
+Extended Backus-Naur Form (EBNF) --
+although this similarity can often be misleading.
+
+Parsers defined by PEG
+do not require a separate "lexer" or "scanner".
+Together with the lifting of the $LL(1)$ restriction,
+this gives a very convenient tool when we need 
+an ad-hoc parser for some application.
+
+Even the limited backtracking may require a lot of time.
+In \cite{Ford:2002,Ford:Thesis}, PEG was introduced together with
+a technique called \emph{packrat parsing}.
+Packrat parsing handles backtracking
+by extensive \emph{memoization}: storing all results
+of parsing procedures\footnote{
+"Packrat" comes from \emph{pack rat} -- a small rodent (\emph{Neotoma cinerea})  
+known for hoarding unnecessary items; also a person that does the same.
+"Memoization", introduced in \cite{Michie:1968}, is the technique  
+of reusing stored results of function calls instead of recomputing them.}.
+It guarantees linear parsing time at a large memory cost.
+There exists a complete parser generator named \textsl{Rats!} \cite{Grimm:2004,Grimm:Rats}
+that produces packrat parsers from PEG.
+
+Excessive backtracking does not matter 
+in small interactive applications
+where the input is short and performance not critical.
+Moreover, the usual programming languages
+do not require much backtracking.
+%
+Experiments reported in \cite{Redz:2007:FI,Redz:2008:FI}
+demonstrated a moderate backtracking activity  
+in PEG parsers for programming languages Java 1.5 and C.
+
+\medskip
+\Mouse\ is a development of parser generator used for these experiments.
+It translates PEG into a set of recursive procedures that closely follow the grammar.
+Unlike \textsl{Rats!}, \Mouse\ does not produce a packrat parser.
+Optionally, it can offer a small amount of memoization using the technique
+described in \cite{Redz:2007:FI}.
+Both \Mouse\ and the resulting parser are written in Java.
+%
+An integral feature of \Mouse\ is the mechanism for specifying
+semantics (also in Java). 
+
+\medskip
+After a short presentation of PEG in the following section,
+the rest of the paper has the form of a tutorial,
+introducing the reader to \Mouse\ by hands-on experience.

@@ -1,0 +1,35 @@
+\newpage   
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\section{Appendix: Your parser class\label{DocPars}}
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+These are the methods you can apply to your generated parser.\newline
+"\tx{Parser}" and
+"\tx{Semantics}" are names of your parser and semantics classes,
+respectively.
+
+\ul
+
+\item[\textbf{Parser}\texttt{()}]\upsp \newline
+   Parser constructor. Instantiates your parser and semantics,
+   connects semantics object to the parser,
+   and returns the resulting parser object.\dnsp
+
+\item[\texttt{boolean }\textbf{parse}\texttt{(Source src)}]\upsp \newline
+   Parses input wrapped into a \tx{Source} object \textit{src}.\newline
+   Returns \tx{true} if the parse was successful, or \tx{false} otherwise.\dnsp
+
+\item[\texttt{Semantics }\textbf{semantics}\texttt{()}]\upsp \newline
+   Returns the semantics object associated with the parser.\dnsp
+
+\item[\texttt{void }\textbf{setTrace}\texttt{(String s)}]\upsp \newline
+   Assigns $s$ to the \tx{trace} field in semantics object.\dnsp
+
+\item[\texttt{void }\textbf{setMemo}\texttt{(int n)}]\upsp \newline
+   Sets the amount of memoization to $n$, $0 \le n \le 9$.\newline
+   Can only be applied to a parser generated with option \tx{-M} or \tx{-T}
+   (see \tx{mouse.Generate} tool).
+
+\eul

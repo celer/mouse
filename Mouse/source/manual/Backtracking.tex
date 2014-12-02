@@ -1,0 +1,132 @@
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\section{What about backtracking?\label{back}}
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+As you can easily see, \tx{Number} in the last grammar
+does not satisfy the classical $LL(1)$ condition:
+seeing a digit as the first character,
+you do not know which alternative it belongs to.
+Presented with "\tx{123}", the parser will start with
+the first alternative of \tx{Number} ("fraction")
+and process "\tx{123}" as its \Digits. 
+Not finding the decimal point, the parser will backtrack and try
+the other alternative ("integer"),
+again processing the same input as \Digits.
+This re-processing of input is the price for not bothering
+to make the grammar $LL(1)$.
+
+The loss of performance caused by reprocessing is uninteresting
+in this particular application.
+However, circumventing $LL(1)$ in this way may cause a more serious problem.
+The reason is the limited backtracking of PEG.
+As indicated in Section~\ref{PEG}, 
+if the parser successfully accepts the first alternative 
+of $e_1 / e_2$ and fails later on, 
+it will never return to try $e_2$.
+As a result, some part of the language of $e_2$ may never be recognized.
+This is a known effect; 
+in \cite{Redz:2009:FI} it was called "language hiding":
+a greedy $e_1$ hides a part, or all, of the language otherwise recognized by $e_2$.
+
+Just imagine for a while that the two alternatives in \tx{Number}
+are reversed. 
+Presented with "\tx{123.45}", \tx{Number} consumes "\tx{123}" as an "integer"
+and returns to \tx{Sum}, reporting success.
+The \tx{Sum} finds a point instead of \tx{AddOp}, 
+and terminates prematurely. 
+The other alternative of \tx{Number} is never tried.
+All fractional numbers starting with \Digits\ are hidden by a greedy "integer".
+
+Sylvain Schmitz \cite{Schmitz:2006} formulated the following sufficient
+condition for the absence of language hiding:
+%
+\begin{equation*}
+\sL(e_1) \cap \Pref(\sL(e_2)\sL(\follow(e_1/e_2))) = \emptyset\,,
+\end{equation*}
+%
+where $\sL(e)$ is the language of $e$, $\follow(e)$
+is any sequence of expressions that can be called after $e$,
+and $\Pref(\sL)$ is the set of all prefixes of strings in $\sL$.
+
+An automatic checking of this condition is complex, and perhaps even impossible
+in general case. 
+\Mouse\ does not attempt it.
+However,
+you can still use the formula to verify by inspection that the choice in \tx{Number}
+starting with "fraction"
+is safe: the "integer" is never followed by a decimal point.
+
+To watch the backtracking activity of your parser,
+you may generate an instrumented version of it.
+To do this, type these commands:
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ java mouse.Generate -G myGrammar.txt -P myParser -S mySemantics -T
+ javac myParser.java
+\end{Verbatim}
+\normalsize
+
+The option \tx{-T} instructs the Generator to construct a "test version".
+(You may choose another name for this version if you wish,
+the semantics class remains the same.)
+Invoking the test version with \tx{mouse.TryParser}
+produces the same results as before.
+In order to exploit the instrumentation, you have to use \tx{mouse.TestParser};
+the session may look like this:
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ java mouse.TestParser -P myParser
+ > 123 + 4567
+ 4690.0
+
+ 51 calls: 34 ok, 15 failed, 2 backtracked.
+ 11 rescanned.
+ backtrack length: max 4, average 3.5.
+
+ >
+\end{Verbatim}
+\normalsize
+
+This output tells you that to process your input "\tx{123 + 4567}",
+the parser executed 51 calls to parsing procedures,
+of which 34 succeeded, 15 failed, and two backtracked.
+(We treat here the services that implement terminals as parsing procedures.)
+As expected, the parser backtracked 3 characters on the first \tx{Number}
+and 4 on the second, so the maximum backtrack length was 4 
+and the average backtrack length was 3.5.
+You can also see that 11 of the procedure calls were "re-scans":
+the same procedure called again at the same input position.
+You can get more detail by specifying the option~\tx{-d}:
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ java mouse.TestParser -P myParser -d
+ > 123 + 4567   
+ 4690.0
+
+ 51 calls: 34 ok, 15 failed, 2 backtracked.
+ 11 rescanned.
+ backtrack length: max 4, average 3.5.
+ 
+ Backtracking, rescan, reuse:
+ procedure        ok  fail  back  resc reuse totbk maxbk at             
+ ------------- ----- ----- ----- ----- ----- ----- ----- --             
+ Digits            4     0     0     2     0     0     0
+ Number_0          0     0     2     0     0     7     4 After '123 + ' 
+ [0-9]            14     4     0     9     0     0     0
+ 
+ >
+\end{Verbatim}
+\normalsize
+
+You see here statistics for individual procedures that were involved
+in backtracking and rescanning.
+\verb#Number_0# is the internal procedure for the first alternative of \Number.
+As you can guess, "\tx{totbk}" stands for total backtrack length
+and "\tx{maxbk}" for length of the longest backtrack; 
+"\tx{at}" tells where this longest backtrack occurred.
+The meaning of "\tx{reuse}" will be clear in a short while.

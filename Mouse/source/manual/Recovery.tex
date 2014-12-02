@@ -1,0 +1,77 @@
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\section{Error recovery\label{errRec}}
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+If you tried the parser on a faulty file, you have noticed that it stops
+after encountering the first faulty line.
+It perhaps does not make sense for this particular computation,
+but in many cases you would like the parser to just skip the faulty line
+and continue with the next.
+For example, if you use
+the parser to implement a compiler, you want it
+to continue and possibly discover more errors.
+Such behavior can be achieved by defining a faulty line as an additional
+alternative for \tx{Line}, to be tried after \tx{Store} and \tx{Print} failed.
+With this addition, the first lines of your grammar would look like this
+(note the use of the shorthand operator \tx{++}):
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   Input   = [\n\r]* Line++ EOF ;
+   Line    = Space (Store / Print) ~{badLine}
+           / BadLine ;
+   Store   = Name Space Equ Sum EOL {store} ;    // store result
+   Print   = Sum EOL {print} ;                   // print result
+   BadLine = _++ EOL ;                           // skip bad line
+\end{Verbatim}
+\normalsize
+
+The \tx{BadLine} is defined to  be any sequence of characters
+up to the nearest end of line or end of input.
+After a failure of \tx{(Store / Print)}, the parser backtracks
+and consumes all of \tx{BadLine}.
+
+The name in brackets preceded by a tilde: \verb#~{badLine}# identifies 
+a semantic action to be invoked in case of failure.
+Thus, \tx{badLine} is invoked when
+the first alternative of \tx{Line} fails.
+The method has an access to a Phrase object for \tx{Line},
+appearing as the left-hand side of the failing rule
+\tx{Line = (Store / Print)}.
+There is no right-hand side, but \tx{lhs()} contains
+error information.
+The function of \tx{badLine} is to print out this
+information and erase it.
+This is done by calling helper methods 
+\tx{errMsg()} and \tx{errClear()}:
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   //-------------------------------------------------------------------
+   //  Line = Store / Print (failed)
+   //-------------------------------------------------------------------
+   void badLine()
+     {
+       System.out.println(lhs().errMsg());
+       lhs().errClear();
+    }
+\end{Verbatim}
+\normalsize
+
+(The line will not be rescanned, so it is safe to print the message.)
+
+The use of \tx{++} in \tx{Input} prevents a repeated call to \tx{BadLine}
+after an erroneous last line.
+Because \tx{BadLine} is called in an iteration, 
+it must consume at least one character.
+It is therefore defined using \tx{++} rather than \tx{*+}.
+You may verify that it will never be called at \tx{EOL}.
+
+You can find the modified grammar and semantics in \tx{example10},
+together with the source for \tx{FileCalc}.
+Generate the new parser in the usual way and compile everything;
+then damage the input file in several places,
+and run the parser on it using \tx{FileCalc}
+to see the diagnostics.

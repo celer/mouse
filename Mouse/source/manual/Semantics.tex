@@ -1,0 +1,489 @@
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\section{Adding semantics}
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+This hasn't been very exciting.
+You certainly want the parser to do something more than checking the syntax.
+For example, to actually compute the sum.
+For this purpose, you attach "semantic actions" to rules of the grammar.
+
+As you have seen, \Mouse\ transcribes each rule of the grammar into a parsing procedure
+in the form of a Java method.
+A semantic action is a Java method, written by you,
+that is called by a successful parsing procedure as the last thing before it exits.
+You may use this method to process the text consumed by the procedure.
+
+In order to compute the sums, you may define a semantic action for \Number\
+that will convert the digits consumed by \Number\ into an integer.
+You may then define a semantic action for \Sum\ that will receive these integers,
+add them, and print the result.
+
+In most parser generators, the code for semantic actions
+is inserted directly into the grammar.
+\Mouse\ is a departure from that tradition.
+You provide semantic actions as methods in a separate class
+with any name of your choice,
+for example \tx{"mySemantics"}.
+It must be a subclass of \tx{mouse.runtime.SemanticsBase}
+provided by \Mouse.
+The superclass \tx{SemanticsBase} contains "helper methods"
+that give you access to results of the parsing.
+The structure of your parser together with semantic actions is as follows:
+
+\smallskip
+%----------------------------------------------------------------------
+\small
+\begin{center}
+\begin{texdraw}
+  \drawdim {mm}
+  \setunitscale 0.75
+  \linewd 0.2
+  \textref h:L v:B
+  \arrowheadtype t:F
+  \arrowheadsize l:2 w:1
+  %
+  \move(0 0)
+  \savecurrpos(*mPx *mPy)
+  \rlvec(40 0) \rlvec(0 40) \rlvec(-40 0) \rlvec(0 -40)
+  \move(*mPx *mPy) \rmove(2 6)  \htext{\tx{myParser}}
+                   \rmove(0 -4) \htext{\tx{(generated)}}
+  \move(*mPx *mPy) \rmove(20 40) \rlvec(0 10) \rmove(0 -3) \rlvec(-3 -3) \rlvec(6 0) \rlvec(-3 3)
+  \move(*mPx *mPy) \rmove(6 20)   \htext{\tx{parsing}} 
+                   \rmove(0 -3.5) \htext{\tx{procedure}}
+  \move(*mPx *mPy) \rmove(12 26) \lpatt(2 1) \ravec(0 28) \lpatt()                 
+  \move(*mPx *mPy) \rmove(29 19) \lpatt(2 1) \ravec(37 0) \lpatt()                 
+  %
+  \move(0 50)
+  \savecurrpos(*bPx *bPy)
+  \rlvec(40 0) \rlvec(0 40) \rlvec(-40 0) \rlvec(0 -40)
+  \move(*bPx *bPy) \rmove(2 35)   \htext{\tx{ParserBase}}
+                   \rmove(0 -4)   \htext{\tx{(Mouse)}}
+  \move(*bPx *bPy) \rmove(6 15)   \htext{\tx{begin}} 
+                   \rmove(0 -2.5) \htext{\tx{next}}
+                   \rmove(0 -3.5) \htext{\tx{accept}}
+                   \rmove(0 -2.5) \htext{\tx{etc.}}
+  \move(*bPx *bPy) \rmove(20 22)  \htext{\tx{parser}}
+                   \rmove(0 -2.5) \htext{\tx{stack}}
+  %
+  \move(60 0)
+  \savecurrpos(*mSx *mSy)
+  \rlvec(40 0) \rlvec(0 40) \rlvec(-40 0) \rlvec(0 -40)
+  \move(*mSx *mSy) \rmove(2 6) \htext{\tx{mySemantics}}
+                   \rmove(0 -4) \htext{\tx{(written by you)}}
+  \move(*mSx *mSy) \rmove(20 40) \rlvec(0 10) \rmove(0 -3) \rlvec(-3 -3) \rlvec(6 0) \rlvec(-3 3)
+  \move(*mSx *mSy) \rmove(8 20)   \htext{\tx{semantic}} 
+                   \rmove(0 -3.5) \htext{\tx{action}}
+  \move(*mSx *mSy) \rmove(14 25) \lpatt(2 1) \ravec(0 42) \lpatt() 
+  \move(*mSx *mSy) \rmove(0 34) \ravec(-20 0) \rmove(18 0) \ravec(2 0)
+  %
+  \move(60 50)
+  \savecurrpos(*bSx *bSy)
+  \rlvec(40 0) \rlvec(0 40) \rlvec(-40 0) \rlvec(0 -40)
+  \move(*bSx *bSy) \rmove(2 35)  \htext{\tx{SemanticsBase}}
+                   \rmove(0 -4) \htext{\tx{(Mouse)}}
+  \move(*bSx *bSy) \rmove(8 22) \htext{\tx{helper}} 
+                   \rmove(0 -3) \htext{\tx{method}}
+  \move(*bSx *bSy) \rmove(6 22) \lpatt(2 1) \ravec(-32 0) \lpatt()                 
+  \move(*bSx *bSy) \rmove(0 34) \ravec(-20 0) \rmove(18 0) \ravec(2 0)
+\end{texdraw}
+
+\end{center}
+\normalsize
+%----------------------------------------------------------------------
+
+All four classes are instantiated by a constructor
+that is included in the generated parser.
+The constructor establishes references between the
+instantiated objects.
+
+In the grammar, you indicate the presence of a semantic action by inserting its name in curly brackets
+at the end of a rule:
+
+\smallskip 
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   Sum    = Number ("+" Number)* !_ {sum} ;
+   Number = [0-9]+ {number} ;
+\end{Verbatim}
+\normalsize
+ 
+This tells that \Sum\ will have a semantic action \Suma,
+and \Number\ will have a semantic action \Numbera.
+You find this grammar as \tx{myGrammar.txt} in \tx{example2}.
+Copy it into the \tx{work} directory (replacing the old one),
+and type at the command prompt:
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ java mouse.Generate -G myGrammar.txt -P myParser -S mySemantics
+\end{Verbatim}
+\normalsize
+
+This generates a new file \tx{myParser.java}.
+By inspecting this file,
+you can see that parsing procedures \Sumb\
+and \Numberb\ contain calls to their semantic actions, as shown below.
+The qualifier \tx{sem} is a reference to your semantics class \tx{mySemantics};
+you had to supply its name in order to generate this reference.
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+  //=====================================================================
+  //  Sum = Number ("+" Number)* !_ {sum} ;
+  //=====================================================================
+  private boolean Sum()
+    {
+      begin("Sum");
+      if (!Number()) return reject();
+      while (Sum_0());
+      if (!aheadNot()) return reject();
+      sem.sum();                         // semantic action
+      return accept();
+    }
+\end{Verbatim}
+\normalsize
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+  //=====================================================================
+  //  Number = [0-9]+ {number} ;
+  //=====================================================================
+  private boolean Number()
+    {
+      begin("Number");
+      if (!nextIn('0','9')) return reject();
+      while (nextIn('0','9'));
+      sem.number();                      // semantic action
+      return accept();
+\end{Verbatim}
+\normalsize
+
+Your semantics class is going to appear like this:
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+class mySemantics extends mouse.runtime.SemanticsBase
+{
+  //-------------------------------------------------------------------
+  //  Sum = Number ("+" Number)* !_
+  //-------------------------------------------------------------------
+  void sum()
+    {...}
+  
+  //-------------------------------------------------------------------
+  //  Number = [0-9]+
+  //-------------------------------------------------------------------
+  void number()
+    {...}
+\end{Verbatim}
+\normalsize
+
+If you wish, you may generate a file containing the above skeleton at the same time as you generated your parser,
+by specifying the option \tx{-s} on your command:
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ java mouse.Generate -G myGrammar.txt -P myParser -S mySemantics -s
+\end{Verbatim}
+\normalsize
+
+It replies:
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ 2 rules
+ 1 unnamed
+ 3 terminals
+ 2 semantic procedures
+\end{Verbatim}
+\normalsize
+
+indicating that it found two semantic actions,
+and produces the skeleton file \tx{mySemantics.java} in the \tx{work} directory,
+in addition to the parser file \tx{myParser.java}.
+
+It remains now to write the two methods.
+In order to do this, you need to know how to access the result of parsing. 
+
+Behind the scenes, hidden in the service methods,
+each call to a parsing procedure,
+or to a service that implements a terminal,
+returns a \Phrase\ object. 
+The object is an instance of class \Phrase,
+an internal class of \tx{ParserBase}.
+It describes the portion of input consumed
+by the call -- the consumed "phrase".
+
+Still behind the scenes, each parsing procedure collects 
+the \Phrase\ objects returned
+by the service methods and procedures that it calls.
+At the end, it uses information from them
+to construct its own resulting \Phrase.
+The semantic action is called just after this latter
+has been constructed, and can access it, together
+with the \Phrase s representing the partial results.
+
+As an illustration,
+we are going to describe what happens when your parser processes 
+the input \tx{"17+4711"}.
+
+The process starts by calling \Sumb, which immediately calls \Numberb.
+\Numberb, in turn, makes two calls to \tx{nextIn()} that consume,
+respectively, the digits \tx{"1"} and \tx{"7"},
+and return one \Phrase\ object each.
+\Numberb\ (or, more precisely, the service methods called in the process) 
+uses information from these objects to construct
+a new \Phrase\ object that represents the text \tx{"17"}
+thus consumed.
+This is going to be the result of \Numberb.
+
+All three objects are accessible to the semantic action \Numbera,
+and can be visualized as follows:
+
+%----------------------------------------------------------------------
+\small
+\begin{center}
+\begin{texdraw}
+  \drawdim {mm}
+  \setunitscale 0.9
+  \linewd 0.1
+  \textref h:C v:C
+  \arrowheadtype t:F
+  \arrowheadsize l:2 w:1
+  \savepos( 0  8)(*C1x *R1y)
+  \savepos(30  8)(*C2x *R2y)
+  \savepos(55  8)(*C3x *R3y)
+  %
+  \move(*C1x *R1y) \phrase{Number}{17}{}{lhs()}{}{P11}
+  \move(*C2x *R1y) \phrase{[0-9]}{1}{}{rhs(0)}{}{P21}
+  \move(*C3x *R1y) \phrase{[0-9]}{7}{}{rhs(1)}{}{P31}
+  %
+  \move(*P21lx *P21ly) \ravec(-6 0)
+  %
+  \move(*C2x 0)
+  \savecurrpos(*cx *cy)
+  \move(*cx *cy) \rlvec(8 0)
+  \rmove(0 4)   \rlvec(-8 0)
+  \move(*cx *cy) 
+  \rmove(0 0)   \rlvec(0 4)
+  \rmove(4 -4)  \rlvec(0 4)
+  \rmove(4 -4)  \rlvec(0 4)
+  \textref h:C v:C
+  \move(*cx *cy) \rmove(2 2) 
+  \rmove(0 0) \htext{\tx{1}}
+  \rmove(4 0) \htext{\tx{7}}
+  \rmove(4 0) \htext{\tx{+}}
+  \rmove(4 0) \htext{\tx{4}}
+  \rmove(4 0) \htext{\tx{7}}
+  \rmove(4 0) \htext{\tx{1}}
+  \rmove(4 0) \htext{\tx{1}}
+\end{texdraw}
+\end{center}
+\normalsize
+%----------------------------------------------------------------------
+
+Each box represents one \Phrase\ object.
+The text highest in the box identifies the parsing procedure or the service
+that constructed it.
+The text below is the consumed portion of input. 
+
+In the semantic action,
+you obtain references to the three objects by calls to helper methods
+shown above the boxes.
+They should be read as "left-hand side", "right-hand side element~0",
+and "right-hand side element~1":
+they correspond to the left- and right-hand sides of the rule \tx{"Number = [0-9]+"}.
+
+According to the initial plan, \Numbera\ is expected
+to convert the text \tx{"17"} consumed by \Numberb\
+into the integer 17.
+This could be done by obtaining the digits represented by \tx{rhs(0)} and \tx{rhs(1)}
+and processing them to obtain the integer.
+However, the integer can be obtained directly from the text represented by \tx{lhs()},
+by using a method from the Java class \tx{Integer}.
+To obtain the text represented by a \Phrase\ object, you apply the helper method \tx{text()} to the object.
+The integer 17 is thus obtained as \tx{Integer.valueOf(lhs().text())}.
+
+Each \Phrase\ object has a field of type \Object\ where you can insert 
+the "semantic value" of the represented phrase.
+It is shown here as an empty slot at the bottom of each box.
+You can insert there the integer 17 as semantic value of the result.
+You insert semantic value into a \Phrase\ object by applying the helper method \tx{put(...)}
+to that object, so your \Numbera\ 
+can be written as follows:
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   //-------------------------------------------------------------------
+   //  Number = [0-9]+
+   //-------------------------------------------------------------------
+   void number()
+     { lhs().put(Integer.valueOf(lhs().text())); }
+\end{Verbatim}
+\normalsize
+
+After completed semantic action, \Numberb\ returns to \Sumb,
+delivering this object as its result:
+
+%----------------------------------------------------------------------
+\small
+\begin{center}
+\begin{texdraw}
+  \drawdim {mm}
+  \setunitscale 0.9
+  \linewd 0.1
+  \move(0 0) \lowphrase{Number}{17}{Integer 17}{}{}{P11}
+\end{texdraw}
+\end{center}
+\normalsize
+%----------------------------------------------------------------------
+
+After receiving control back, \Sumb\ proceeds, via \verb#Sum_0()#,
+to call \tx{next()} and \Numberb\ that consume, respectively, \tx{"+"}
+and \tx{"4711"}, and return their resulting \Phrase\ objects.
+\Sumb\ uses information from them to construct
+a new \Phrase\ object that represents the text \tx{"17+4711"}
+thus consumed.
+
+All four objects are accessible to the semantic action \Suma,
+and can be visualized as follows:
+
+%----------------------------------------------------------------------
+\small
+\begin{center}
+\begin{texdraw}
+  \drawdim {mm}
+  \setunitscale 0.9
+  \linewd 0.1
+  \textref h:C v:C
+  \arrowheadtype t:F
+  \arrowheadsize l:2 w:1
+  \savepos( 0  8)(*C1x *R1y)
+  \savepos(30  8)(*C2x *R2y)
+  \savepos(55  8)(*C3x *R3y)
+  \savepos(80  8)(*C4x *R4y)
+  %
+  \move(*C1x *R1y) \phrase{Sum}{17+4711}{}{lhs()}{}{P11}
+  \move(*C2x *R1y) \phrase{Number}{17}{Integer 17}{rhs(0)}{}{P21}
+  \move(*C3x *R1y) \phrase{"+"}{+}{}{rhs(1)}{}{P31}
+  \move(*C4x *R1y) \phrase{Number}{4711}{Integer 4711}{rhs(2)}{}{P41}
+  %
+  \move(*P21lx *P21ly) \ravec(-6 0)
+  %
+  \move(*C2x 0) \rmove(10 0)
+  \savecurrpos(*cx *cy)
+  \move(*cx *cy) \rlvec(28 0)
+  \rmove(0 4)   \rlvec(-28 0)
+  \move(*cx *cy) 
+  \rmove(0 0)   \rlvec(0 4)
+  \rmove(8 -4)  \rlvec(0 4)
+  \rmove(4 -4)  \rlvec(0 4)
+  \rmove(16 -4) \rlvec(0 4)
+  \textref h:C v:C
+  \move(*cx *cy) \rmove(2 2) 
+  \rmove(0 0) \htext{\tx{1}}
+  \rmove(4 0) \htext{\tx{7}}
+  \rmove(4 0) \htext{\tx{+}}
+  \rmove(4 0) \htext{\tx{4}}
+  \rmove(4 0) \htext{\tx{7}}
+  \rmove(4 0) \htext{\tx{1}}
+  \rmove(4 0) \htext{\tx{1}}
+\end{texdraw}
+\end{center}
+\normalsize
+%----------------------------------------------------------------------
+
+Both \Numberb\ results carry as semantic values the integers computed by \Numbera.
+To obtain the semantic value of a \Phrase\ you apply 
+the helper method \tx{get()} to it.
+You can now easily compute the sum as follows
+(you need the casts because \tx{get()} returns an \Object):
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+     (Integer)rhs(0).get() + (Integer)rhs(2).get().
+\end{Verbatim}
+\normalsize
+However, in the general case you may have any number $p \ge 0$
+of \tx{("+"~\Number)} pairs resulting from $p$ successful calls to \verb#Sum_0()#.
+Your \Suma\ must thus handle the following general situation 
+with $n = 2p + 1$ \Phrase s on the right-hand side:
+
+%----------------------------------------------------------------------
+\small
+\begin{center}
+\begin{texdraw}
+  \drawdim {mm}
+  \setunitscale 0.9
+  \linewd 0.1
+  \textref h:C v:C
+  \arrowheadtype t:F
+  \arrowheadsize l:2 w:1
+  \savepos( 0 0)(*C1x *R2y)
+  \savepos(30 0)(*C2x *R2y)
+  \savepos(55 0)(*C3x *R2y)
+  \savepos(80 0)(*C4x *R2y)
+  \savepos(105 0)(*C5x *R2y)
+  \savepos(130 0)(*C6x *R2y)
+  %
+  \move(*C1x *R2y) \phrase{Sum}{}{}{lhs()}{}{P11}
+  %
+  \move(*C2x *R2y) \phrase{Number}{}{}{rhs(0)}{}{P21}
+  \move(*C3x *R2y) \phrase{"+"}{}{}{rhs(1)}{}{P31}
+  \move(*C4x *R2y) \phrase{Number}{}{}{rhs(2)}{}{P41}
+  \move(*C5x *R2y) \phrase{"+"}{}{}{rhs($n$-2)}{}{P51}
+  \move(*C6x *R2y) \phrase{Number}{}{}{rhs($n$-1)}{}{P61}
+  %
+  \move(*P21lx *P21ly) \ravec(-6 0)
+  %
+  \lpatt(2 1)
+  \move(*C4x *R2y)\rmove(21 0) \rlvec(8 0)
+  \move(*C4x *R2y)\rmove(21 15)\rlvec(8 0)
+  \lpatt()
+\end{texdraw}
+\end{center}
+\normalsize
+%----------------------------------------------------------------------
+
+To obtain the number $n$  
+you use the helper method \tx{rhsSize()}.
+Your method \Suma\ may thus look like this:
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   //-------------------------------------------------------------------
+   //  Sum = Number "+" Number ... "+" Number !_
+   //          0     1    2        n-2   n-1
+   //-------------------------------------------------------------------
+   void sum()
+     {        
+       int s = 0;
+       for (int i=0;i<rhsSize();i+=2)
+         s += (Integer)rhs(i).get();
+       System.out.println(s);
+     }
+\end{Verbatim}
+\normalsize
+ 
+You find the complete semantics class, with the methods \Numbera\ and \Suma\
+just described,
+as file \tx{mySemantics.java} in \tx{example2};
+copy it to the \tx{work} directory. 
+To obtain the new parser, compile the semantics class   
+and the parser class you have generated. 
+You can try it in the same way as before.
+The session may look like this:
+  
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ javac myParser.java
+ javac mySemantics.java
+ java mouse.TryParser -P myParser
+ > 17+4711
+ 4728
+ > 12+2+3
+ 17
+ >
+\end{Verbatim}
+\normalsize

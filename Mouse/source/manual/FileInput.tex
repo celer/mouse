@@ -1,0 +1,136 @@
+\newpage
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\section{Input from file\label{file}}
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+In more serious applications, like a compiler, the parser has to read 
+input from a file.
+We are going to show the way of doing this by an adaptation
+of the calculator developed above.
+
+Just suppose you want to perform a sequence of calculations such as this:
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ n = 0  
+ f = 1
+ e = 1
+ e
+ n = n + 1 
+ f = f * n
+ e = e + 1/f  
+ e
+ n = n + 1 
+ f = f * n
+ e = e + 1/f  
+ e
+   ...
+\end{Verbatim}
+\normalsize
+
+that will print the consecutive stages of computing the number $e$
+from its series expansion.
+You want the calculator to read this input from a file.
+All you need is to enlarge your syntax by defining the input
+as a sequence of \tx{Line}s:
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   Input = [\n\r]* Line+ EOF ;
+   Line  = Space (Store / Print) ;
+   Store = Name Space Equ Sum EOL {store} ;
+   Print = Sum EOL {print} ;
+
+    ...  as before  ...   
+
+   EOL     = [\n\r]+ / EOF <end of line> ;
+   EOF     = !_ <end of file> ;
+\end{Verbatim}
+\normalsize
+
+This grammar defines \tx{EOL} to be either end of line
+or end of input.
+End of line is defined as one or more newlines and/or carriage returns,
+meaning that the syntax allows empty lines -- really empty, without
+even space characters in them.
+(The \verb#"\n"# and \verb#"\r"# stand for newline and carriage
+return characters, respectively; see Section~\ref{escape}.)
+The \verb#[\n\r]*# at the beginning permits the file to start with empty lines.
+
+You do not need to change semantics.
+
+Copy \tx{myGrammar.txt} and sample file \tx{e.txt} from \tx{example9},
+generate the parser and compile it in the usual way.
+
+To run the parser on the sample file, type at command prompt:
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ java mouse.TryParser -P myParser -f e.txt
+\end{Verbatim}
+\normalsize
+
+The option \tx{-f e.txt} instructs the tool to take its input from
+the file \tx{e.txt}.
+You should get this output:
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ e.txt
+ 1.0
+ 2.0
+ 2.5
+ 2.6666666666666665
+ 2.708333333333333
+ 2.7166666666666663
+ 2.7180555555555554
+ 2.7182539682539684
+ 2.71827876984127
+ 2.7182815255731922
+ 2.7182818011463845
+ --- ok.
+\end{Verbatim}
+\normalsize
+
+The \Mouse\ tool \tx{TryParser} is provided to help you in developing the parser,
+but eventually you will need to invoke the parser from one of your own programs.
+The following is an example of how you can do it:
+
+\medskip
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=6mm,xrightmargin=6mm,baselinestretch=0.8]
+ import mouse.runtime.SourceFile;
+ class FileCalc
+ {
+   public static void main(String argv[])
+     {
+       myParser parser = new myParser();          // Instantiate Parser+Semantics
+       SourceFile src = new SourceFile(argv[0]);  // Wrap the file
+       if (!src.created()) return;                // Return if no file
+       boolean ok = parser.parse(src);            // Apply parser to it
+       System.out.println(ok? "ok":"failed");     // Tell if succeeded
+     }
+ }
+\end{Verbatim}
+\normalsize
+
+The class \tx{SourceFile} supplied by \Mouse\ is a wrapper
+that maps the file in memory 
+and contains methods needed to access it and to
+print error position in diagnostics.
+You find the above code as \tx{FileCalc.java} in \tx{example9}.
+Copy it into the \tx{work} directory and compile.
+You can then invoke the calculation by typing:
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ java FileCalc e.txt
+\end{Verbatim}
+\normalsize
+
+To see the kind of diagnostics produced for a file, damage \tx{e.txt}
+by, for example, duplicating one of the operators 
+or changing \tx{"n"} to \tx{"x"} in an expression,
+and run the parser on the damaged file.

@@ -1,0 +1,247 @@
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\section{Miscellaneous features}
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+This section describes some features not mentioned in the tutorial.
+
+\subsection{Escaped characters\label{escape}}
+
+None of the characters you write in String Literal, Character Class, and Character Range
+is allowed to be newline or carriage return.
+The same applies to diagnostic names in pointed brackets.
+It is also not advisable to use there any white-space characters other than blank.
+Other characters, namely \tx{"}, \tx{]}, \tx{-}, \tx{>}, cannot be used because they will be mistaken
+for delimiters. 
+Still other characters may be not available at your keyboard.
+You specify all such characters using the conventions of "escape". 
+
+Any character other than \tx{n}, \tx{r}, \tx{t}, or \tx{u},
+preceded by a backslash \verb#\# represents itself as part of the string $s$
+in String Literal and Character Class,
+or as $c_1, c_2$ in Character Range, but is not recognized as a delimiter.
+Thus, for example, \verb#"\""# is a String Literal of one double quote~\tx{"},
+and \verb#[[\]]# is a Character Class consisting of the brackets \tx{[} and~\tx{]}.
+
+The special combinations \verb#\n#, \verb#\r#, and \verb#\t# represent
+the newline, carriage return, and tab characters, respectively.
+The special combination \verb#\u# must be followed by four hexadecimal digits
+representing a Unicode character. 
+Thus, for example, \verb#\u000B# stands for the vertical tab character.
+
+
+\subsection{Character encoding}
+
+Both your grammar file and the file processed by your parser 
+consist of bytes
+that may be interpreted in different ways
+depending on the used \emph{character encoding scheme}.
+For example, the byte with value 248 (hex \tx{f8}) means the Norwegian character \tx{\o} 
+in the encoding ISO-8859-1, or the Czech character \tx{\v{r}}
+in the encoding ISO-8859-2;
+the command prompt window of Windows XP displays it as a degree sign~$ ^\circ$.
+The bytes with values in the range 32 through 126, known as the ASCII character set,
+have a fixed interpretation that does not depend of encoding.
+
+Both the \tx{Generate} tool and the resulting parser use the default 
+character encoding set up for the Java Virtual Machine executing them.
+%
+Your grammar uses, in principle, only the ASCII characters, 
+but you can have other characters in values of terminals, 
+in diagnostic names, or in comments.
+These chracters are interpreted according to the default encoding.
+When they appear as literals in the generated Java file,
+they are converted to Unicode escapes that are composed of ASCII characters.
+It means that the compiled parser does not depend on the 
+encoding used at the compile time.
+
+The input file processed by the parser is also interpreted 
+according to the default encoding.
+If you need, you may enforce a specific encoding for input files
+by modifying the wrapper \tx{SourceFile}.
+
+
+\subsection{Reserved names}
+
+The names you give to expressions and syntactic actions are used as  
+method and object names in the generated parser.
+Therefore they must be distinct from Java reserved words.
+They may also conflict with names used in the base classes,
+but no checks are made in the present version, and
+\textbf{you have, unfortunately, to watch yourself for possible conflicts!}
+ 
+
+\subsection{Boolean actions}
+
+You may specify semantic actions that return a \tx{boolean} value
+in addition to inserting semantic value in the left-hand side \Phrase.
+The action returning \tx{false} causes the invoking procedure to fail.
+You specify such action by placing an ampersand in front of the action name.
+For example, the action \tx{identifier()} invoked by \tx{Identifier} below
+may return \tx{false} if the recognized text is one of reserved words,
+thus forcing \tx{Identifier} to fail on reserved words:
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   Identifier = Letter (Letter / Digit)*  {& identifier} ;
+\end{Verbatim}
+\normalsize
+
+
+\subsection{Omitted action names}
+
+To avoid clobbering your grammar with names of semantic actions, 
+you may only indicate the presence of an action with an empty pair of brackets \verb#{}#.
+The semantic action thus specified has the same name as the rule.
+The actions for multiple alternatives of a choice expression will have numbers attached to them.
+For example, you can write:
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   Product = Factor (MultOp Factor)*  {} ;
+   Factor  = Digits? "." Digits Space {}
+           / Digits Space             {}
+           / Lparen Sum Rparen        {} 
+           / Name Space               {} ; 
+\end{Verbatim}
+\normalsize
+
+The semantic actions defined here are
+\tx{Product()} and \verb#Factor_0()# through \verb#Factor_3()#.
+These names will appear in the skeleton generated by \tx{-s} option.
+
+You specify a Boolean action by an ampersand in brackets: \verb#{&}#.
+
+You specify an error action by brackets preceded with a tilde: \verb#~{}#.\newline
+The name of the action thus specified has suffix \verb#"_fail"#.
+
+
+\subsection{Own diagnostic output}
+
+The error messages described in Section~\ref{errors}
+are written to \tx{System.out}.
+If this does not suit you, you may yourself take care of the message
+as shown in Section~\ref{errRec}.
+You define a semantic action to be called on failure of the top procedure.
+In that action, you obtain the error message using \tx{lhs().errMsg()},
+and handle it in the way you need.
+You should then issue \tx{lhs().errClear()} to prevent the message from
+being written to \tx{System.out}.
+
+The messages returned by \tx{errMsg()} may contain unprintable
+characters appearing in your String Literals, Character Classes, and Character Ranges.
+In the \tx{String} returned by \tx{errMsg()},
+characters outside the range \verb#\u0020# through \verb#\u00ff#
+are replaced by Java-like
+escapes such as \verb#\n# for a newline character, 
+or \verb#\u03A9# for the Greek letter $\Omega$.
+Characters in the range \verb#\u007f# through \verb#\u00ff# are not replaced;
+they may be displayed differently depending on the encoding used to view the message.
+
+(The above applies to all messages from the parser.)
+
+
+\subsection{Trace}
+
+The base class \tx{mouse.runtime.SemanticsBase} contains a \tx{String} variable
+\tx{trace}, normally initialized to empty string.
+Using the method \tx{setTrace()} of your parser, 
+or the option \tx{-T} on \Mouse\ tools \tx{TryParser} and \tx{TestParser},
+you can assign a value to this variable in order to trigger special actions
+such as tracing.
+
+Note that the same value is used to trigger traces in the test version
+of the parser; therefore, you should not use strings containing 
+letters \tx{e}, \tx{i}, or \tx{r} if you are going to use this feature
+together with the test version.
+
+
+\subsection{Package name}
+
+In a real application, your parser and semantics classes will belong to some
+named package.
+You specify the name of that package using option \tx{-p} on 
+\tx{mouse.Generate}.
+
+\subsection{Initialization}
+
+The base class \tx{mouse.runtime.SemanticsBase} contains an empty method
+\tx{void Init()} that is invoked every time you start your parser
+by invoking its \tx{parse} method.
+By overriding this method in your semantics class,
+you can provide your own initialization of that class.
+
+
+\subsection{Specifying output directory}
+
+By default, the \tx{Generate} tool places the resulting parser
+(and semantics skeleton if requested) in the current work directory.
+This default has been used in all the examples.
+You can specify any output directory of your choice using the \tx{-D}
+option on \tx{mouse.Generate}.
+The name of this directory need not correspond to the specified package name.
+
+\subsection{Checking the grammar}
+
+As mentioned in Section~\ref{PEG}, \Mouse\ checks if the grammar is well-formed,
+thus ensuring that the generated parser will always stop.
+As an example, the following grammar is not well-formed:
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+   A = (!"a")* / "b"? A ;
+\end{Verbatim}
+\normalsize
+
+As \tx{"b"?} may succeed without consuming any input, there is a possibility 
+of infinite descent for \tx{A}. 
+As \tx{!"a"} may succeed without consuming input, there is a possibility
+infinite iteration in \tx{(!"a")*}.
+The \tx{Generate} tool produces these messages:
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.79]
+   Warning: the grammar not well-formed.
+   - !"a" in (!"a")* may consume empty string.
+   - A is left-recursive via "b"? A.
+\end{Verbatim}
+\normalsize
+
+You may use the \Mouse\ tool \tx{TestPEG} to check the grammar without generating parser.
+By specifying option \tx{-D} to the tool, you display the grammar
+together with attributes that were used to compute well-formedness according to \cite{Ford:2004}.
+(The rules for computing these attributes can also be found 
+as Figs. 5 and 6 in \cite{Koprowski:Binsztok:2010}.)
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.79]
+   java mouse.TestPEG -G badGrammar.txt -D    
+   Warning: the grammar not well-formed.
+   - !"a" in (!"a")* may consume empty string.
+   - A is left-recursive via "b"? A.
+
+   1 rules
+     A = (!"a")* / "b"? A ;   //  0 !WF
+
+   4 subexpressions
+     (!"a")*   //  0 !WF
+     "b"?   //  01
+     !"a"   //  0f
+     "b"? A   //  01 !WF
+
+   2 terminals
+     "a"   //  1f
+     "b"   //  1f
+\end{Verbatim}
+\normalsize
+
+The symbols appearing as comments on the right have these meanings:
+\ul
+\item[] \tx{0} = may succeed without consuming input;
+\item[] \tx{1} = may succeed after consuming some input;
+\item[] \tx{f} = may fail;
+\item[] \tx{!WF} = not well-formed.
+\eul
+
+

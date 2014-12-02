@@ -1,0 +1,165 @@
+\newpage
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+\section{The first steps}
+
+%HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+We start with the sample grammar from Section~\ref{PEG}.
+You find it as the file \tx{myGrammar.txt} in \tx{example1}.
+Copy it to the \tx{work} directory,
+and enter at the command prompt:
+
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ java mouse.Generate -G myGrammar.txt -P myParser
+\end{Verbatim}
+\normalsize
+%      
+This should produce the answer: 
+%      
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ 2 rules
+ 1 unnamed
+ 3 terminals
+\end{Verbatim}
+\normalsize
+%      
+and generate in the \tx{work} directory a file \tx{myParser.java}
+containing class \tx{myParser}.
+This is your parser.
+
+If you open the file in a text editor, you will see that the 
+parsing expressions \tx{Sum} and \tx{Number} have been transcribed
+into parsing procedures in the form of methods in the class \tx{myParser}. 
+The unnamed inner expression \tx{("+"~Number)} has been transcribed
+into the method \verb#Sum_0#:
+
+\small
+\begin{Verbatim}[frame=single,framesep=2mm,samepage=true,xleftmargin=15mm,xrightmargin=15mm,baselinestretch=0.8]
+  //=====================================================================
+  //  Sum = Number ("+" Number)* !_ ;
+  //=====================================================================
+  private boolean Sum()
+    {
+      begin("Sum");
+      if (!Number()) return reject();
+      while (Sum_0());
+      if (!aheadNot()) return reject();
+      return accept();
+    }
+  
+  //-------------------------------------------------------------------
+  //  Sum_0 = "+" Number
+  //-------------------------------------------------------------------
+  private boolean Sum_0()
+    {
+      begin("");
+      if (!next('+')) return rejectInner();
+      if (!Number()) return rejectInner();
+      return acceptInner();
+    }
+  
+  //=====================================================================
+  //  Number = [0-9]+ ;
+  //=====================================================================
+  private boolean Number()
+    {
+      begin("Number");
+      if (!nextIn('0','9')) return reject();
+      while (nextIn('0','9'));
+      return accept();
+    }
+\end{Verbatim}
+\normalsize
+
+\medskip
+The methods \tx{begin()}, \tx{accept()}, \tx{reject()}, \tx{next()}, etc.
+are standard services provided by \Mouse.
+The first three maintain, behind the scenes, the information
+needed to define semantics;
+it will be discussed in the next section.
+As you may guess, \tx{accept()} returns \emph{true} and \tx{reject()} returns \emph{false}.
+The methods \tx{next()} and \tx{nextIn()} implement terminals.
+For example, \tx{next('+')} implements the parsing expression \tx{"+"}:
+if the next input character is \tx{+}, consumes it and returns \emph{true},
+otherwise returns \emph{false}.
+
+\newpage
+As you can see by inspecting the file, class \tx{myParser} is defined as a subclass of
+\tx{mouse.runtime.ParserBase} provided by \Mouse.
+The service methods are inherited from that superclass.
+The structure of your parser is thus as follows:
+
+%----------------------------------------------------------------------
+\small
+\begin{center}
+\begin{texdraw}
+  \drawdim {mm}
+  \setunitscale 0.75
+  \linewd 0.2
+  \textref h:L v:B
+  \arrowheadtype t:F
+  \arrowheadsize l:2 w:1
+  %
+  \move(0 0)
+  \savecurrpos(*mPx *mPy)
+  \rlvec(40 0) \rlvec(0 40) \rlvec(-40 0) \rlvec(0 -40)
+  \move(*mPx *mPy) \rmove(2 6)  \htext{\tx{myParser}}
+                   \rmove(0 -4) \htext{\tx{(generated)}}
+  \move(*mPx *mPy) \rmove(20 40) \rlvec(0 10) \rmove(0 -3) \rlvec(-3 -3) \rlvec(6 0) \rlvec(-3 3)
+  \move(*mPx *mPy) \rmove(6 20)   \htext{\tx{parsing}} 
+                   \rmove(0 -3.5) \htext{\tx{procedure}}
+  \move(*mPx *mPy) \rmove(12 26) \lpatt(2 1) \ravec(0 28) \lpatt()                 
+  %
+  \move(0 50)
+  \savecurrpos(*bPx *bPy)
+  \rlvec(40 0) \rlvec(0 40) \rlvec(-40 0) \rlvec(0 -40)
+  \move(*bPx *bPy) \rmove(2 35)   \htext{\tx{ParserBase}}
+                   \rmove(0 -4)   \htext{\tx{(Mouse)}}
+  \move(*bPx *bPy) \rmove(6 15)   \htext{\tx{begin}} 
+                   \rmove(0 -2.5) \htext{\tx{next}}
+                   \rmove(0 -3.5) \htext{\tx{accept}}
+                   \rmove(0 -2.5) \htext{\tx{etc.}}
+\end{texdraw}
+\end{center}
+\normalsize
+%----------------------------------------------------------------------
+
+Compile your parser by typing:      
+       
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ javac myParser.java
+\end{Verbatim}
+\normalsize
+       
+To try the parser, type:
+       
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ java mouse.TryParser -P myParser
+\end{Verbatim}
+\normalsize
+  
+This invokes a \Mouse\ tool for running the parser.
+It responds with "\tx{> }" and waits for input.
+If you enter a correct line, 
+it prints another "\tx{> }" to give you another chance.
+If your entry is incorrect, you get an error message
+before another "\tx{> }".
+You exit by pressing Enter just after "\tx{> }".
+
+The session may look like this:
+ 
+\small
+\begin{Verbatim}[samepage=true,xleftmargin=15mm,baselinestretch=0.8]
+ java mouse.TryParser -P myParser
+ > 1+2+3
+ > 17+4711
+ > 2#2
+ After '2': expected [0-9] or '+' or end of text
+ >
+\end{Verbatim}
+\normalsize
