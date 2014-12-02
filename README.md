@@ -89,7 +89,7 @@ To gain a better understanding please see the mouse manual:
 
 http://mousepeg.sourceforge.net/Manual.pdf
 
-```
+```go
 //---------------------------------------------------------------------
 //  Sum = Number ("+" Number)* !_
 //---------------------------------------------------------------------
