@@ -34,7 +34,7 @@ might look like so:
 Which when run through mouse generates a go source file containing a very readable
 output like so:
 
-```golang
+```go
 //=========================================================================
 //
 //  Parsing procedures
