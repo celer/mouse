@@ -94,14 +94,14 @@ http://mousepeg.sourceforge.net/Manual.pdf
 //  Sum = Number ("+" Number)* !_
 //---------------------------------------------------------------------
 func (this *MySemantics) sum() {
-	s:=0;
-	for i:=0;i<this.RHSSize();i+=2 {
-		r,ok:=this.RHS(i).Get().(int);
-		if(ok){
-			s+=r;
-		}
-	}
-	this.result=s;
+  s:=0;
+  for i:=0;i<this.RHSSize();i+=2 {
+    r,ok:=this.RHS(i).Get().(int);
+    if(ok){
+      s+=r;
+    }
+  }
+  this.result=s;
 }
 
 //---------------------------------------------------------------------
