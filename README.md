@@ -97,20 +97,20 @@ func (this *MySemantics) sum() {
       s:=0;
       for i:=0;i<this.RHSSize();i+=2 {
         r,ok:=this.RHS(i).Get().(int);
-				if(ok){
-					s+=r;
-				}
-			}
-			this.result=s;
+        if(ok){
+          s+=r;
+        }
+      }
+      this.result=s;
 }
 
 //---------------------------------------------------------------------
 //  Number = [0-9]+
 //---------------------------------------------------------------------
 func (this *MySemantics) number() {
-	var i int;
-	fmt.Sscanf(this.LHS().Text(),"%d",&i);
-	this.LHS().Put(i);
+  var i int;
+  fmt.Sscanf(this.LHS().Text(),"%d",&i);
+  this.LHS().Put(i);
 }
 ```
 
